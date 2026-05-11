@@ -1,4 +1,4 @@
-package com.example.ms_reservas;
+package com.HomeRentSolution.ms_reservas;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
