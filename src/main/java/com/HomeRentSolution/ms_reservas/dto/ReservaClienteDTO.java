@@ -11,5 +11,5 @@ public class ReservaClienteDTO {
     private LocalDateTime fechaInicio;
     private LocalDateTime fechaFin;
     private EstadoReserva estado;
-    private String idPropiedad;
+    private Long idPropiedad;
 }
