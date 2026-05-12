@@ -19,14 +19,7 @@ public class ReservaService {
     public ReservaClienteDTO crearReserva(Long idInquilino, Long idPropiedad,
                                           LocalDateTime inicio, LocalDateTime fin) {
 
-        if (!disponibilidad.isDisponible()) {
-            if ("CONFIRMADA".equals(disponibilidad.getRazon())) {
-                throw new PropiedadOcupadaException("Propiedad ya reservada.");
-            }
-            if ("PENDIENTE".equals(disponibilidad.getRazon())) {
-                throw new ReservaPendienteException("Reserva pendiente en curso.");
-            }
-        }
+
 
 
 

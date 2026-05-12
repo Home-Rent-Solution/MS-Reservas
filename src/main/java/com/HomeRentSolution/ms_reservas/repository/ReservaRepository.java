@@ -24,5 +24,7 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
         boolean existsConflict(@Param("idPropiedad") Long idPropiedad,
                                @Param("inicio") LocalDateTime inicio,
                                @Param("fin") LocalDateTime fin);
+
+
 }
 
