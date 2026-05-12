@@ -8,5 +8,5 @@ import org.springframework.web.bind.annotation.PathVariable;
 public interface InquilinosClient {
 
     @GetMapping("/inquilinos/{id}")
-    Object getInquilinoPorId(@PathVariable int id);
+    Object getInquilinoPorId(@PathVariable Long id);
 }

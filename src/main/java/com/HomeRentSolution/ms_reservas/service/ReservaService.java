@@ -1,16 +1,21 @@
 package com.HomeRentSolution.ms_reservas.service;
 
+import com.HomeRentSolution.ms_reservas.client.PagosClient;
+import com.HomeRentSolution.ms_reservas.client.PropiedadesClient;
 import com.HomeRentSolution.ms_reservas.dto.ReservaClienteDTO;
 import com.HomeRentSolution.ms_reservas.dto.ReservaPropiedadDTO;
 import com.HomeRentSolution.ms_reservas.model.EstadoReserva;
 import com.HomeRentSolution.ms_reservas.model.Reserva;
 import com.HomeRentSolution.ms_reservas.repository.ReservaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,67 +25,50 @@ import java.util.stream.Collectors;
 public class ReservaService {
 
     private final ReservaRepository reservaRepository;
-    private final ReservaPropiedadDTO propiedadClient;
+    private final PropiedadesClient propiedadClient;
+    private final PagosClient pagosClient;
 
-    @Transactional
-    public ReservaClienteDTO crearReserva(Long idInquilino, Integer idPropiedad,
-                                          LocalDateTime inicio, LocalDateTime fin) {
+    public Reserva crearReserva(Reserva nuevaReserva) {
+        ReservaPropiedadDTO propiedad = propiedadClient.obtenerPropiedadPorId(nuevaReserva.getIdPropiedad());
 
-        if (reservaRepository.existsConflict(idPropiedad.longValue(), inicio, fin)) {
-            throw new RuntimeException("Ya está reservado en esas fechas");
+
+        if (!propiedad.isDisponible()) {
+            throw new RuntimeException("La propiedad no está disponible");
         }
 
-        Reserva reserva = new Reserva();
+        // 2. Calcular monto total (precio * días)
+        long dias = ChronoUnit.DAYS.between(
+                nuevaReserva.getFechaInicio(), nuevaReserva.getFechaFin()
+        );
+        nuevaReserva.setMontoTotal(propiedad.getPrecio().multiply(BigDecimal.valueOf(dias)));
 
-        Reserva guardada = reservaRepository.save(reserva);
+        nuevaReserva.setFechaReserva(LocalDateTime.now());
+        nuevaReserva.setFechaLimitesPago(LocalDateTime.now().plusHours(1));
+        nuevaReserva.setEstado(EstadoReserva.PENDIENTE);
 
-        // 3. LA CONEXIÓN: Avisarle al micro de tu compañero
-        // Al llamar a este método, el campo 'disponible' en su DB pasará a false
-        propiedadClient.actualizarDisponibilidad(idPropiedad);
+        try {
+            propiedadClient.cambiarEstado(nuevaReserva.getIdPropiedad());
+        } catch (Exception e) {
+            throw new RuntimeException("Error al conectar con el microservicio de propiedades: " + e.getMessage());
+        }
 
-        return mapToDTO(guardada);
+        return reservaRepository.save(nuevaReserva);
     }
 
-    public List<ReservaPropiedadDTO> buscarDisponiblesParaCalendario(LocalDateTime inicio, LocalDateTime fin) {
-        // 1. Traer TODAS las propiedades del micro de tu compañero vía Feign
-        List<ReservaPropiedadDTO> todas = propiedadClient.obtenerTodas();
+    @Scheduled(fixedRate = 60000)
+    public void cancelarReservasVencidas() {
+        LocalDateTime ahora = LocalDateTime.now();
+        List<Reserva> vencidas = reservaRepository
+                .findByEstadoAndFechaLimitesPagoBefore(
+                        Reserva.EstadoReserva.PENDIENTE, ahora
+                );
 
-        // 2. Obtener de TU base de datos los IDs de las propiedades ocupadas
-        // Nota: Si tu DB usa Long y él Integer, solo hacemos un cast rápido
-        List<Integer> idsOcupados = reservaRepository.findIdsOcupadosEnRango(inicio, fin)
-                .stream()
-                .map(Long::intValue)
-                .collect(Collectors.toList());
+        vencidas.forEach(reserva -> {
+            reserva.setEstado(Reserva.EstadoReserva.CANCELADA);
+            reservaRepository.save(reserva);
 
-        // 3. Filtrar: "Deme las que NO están ocupadas"
-        return todas.stream()
-                .filter(p -> !idsOcupados.contains(p.getIdPropiedad()))
-                .collect(Collectors.toList());
+            // Liberar la propiedad
+            propiedadClient.cambiarEstado(reserva.getIdPropiedad());
+        });
     }
-
-    public ReservaClienteDTO crearReserva(Long idInquilino, Long idPropiedad,
-                                          LocalDateTime inicio, LocalDateTime fin) {
-
-        Reserva reserva = new Reserva();
-        reserva.setFechaCreacion(LocalDateTime.now());
-        reserva.setFechaInicio(inicio);
-        reserva.setFechaFin(fin);
-        reserva.setEstado(EstadoReserva.PENDIENTE);
-        reserva.setIdInquuilino(idInquilino);
-        reserva.setIdPropiedad(idPropiedad);
-
-
-
-        Reserva guardada = reservaRepository.save(reserva);
-
-        ReservaClienteDTO dto = new ReservaClienteDTO();
-        dto.setId(guardada.getId());
-        dto.setFechaInicio(guardada.getFechaInicio());
-        dto.setFechaFin(guardada.getFechaFin());
-        dto.setEstado(guardada.getEstado());
-        dto.setIdPropiedad(guardada.getIdPropiedad());
-        return dto;
-    }
-
-
 }
