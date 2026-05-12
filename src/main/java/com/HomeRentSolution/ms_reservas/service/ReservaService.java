@@ -7,6 +7,8 @@ import com.HomeRentSolution.ms_reservas.model.Reserva;
 import com.HomeRentSolution.ms_reservas.repository.ReservaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,6 +21,25 @@ public class ReservaService {
 
     private final ReservaRepository reservaRepository;
     private final ReservaPropiedadDTO propiedadClient;
+
+    @Transactional
+    public ReservaClienteDTO crearReserva(Long idInquilino, Integer idPropiedad,
+                                          LocalDateTime inicio, LocalDateTime fin) {
+
+        if (reservaRepository.existsConflict(idPropiedad.longValue(), inicio, fin)) {
+            throw new RuntimeException("Ya está reservado en esas fechas");
+        }
+
+        Reserva reserva = new Reserva();
+
+        Reserva guardada = reservaRepository.save(reserva);
+
+        // 3. LA CONEXIÓN: Avisarle al micro de tu compañero
+        // Al llamar a este método, el campo 'disponible' en su DB pasará a false
+        propiedadClient.actualizarDisponibilidad(idPropiedad);
+
+        return mapToDTO(guardada);
+    }
 
     public List<ReservaPropiedadDTO> buscarDisponiblesParaCalendario(LocalDateTime inicio, LocalDateTime fin) {
         // 1. Traer TODAS las propiedades del micro de tu compañero vía Feign

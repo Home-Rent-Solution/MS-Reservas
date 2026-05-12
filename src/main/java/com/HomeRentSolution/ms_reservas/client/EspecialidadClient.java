@@ -20,5 +20,5 @@ public interface EspecialidadClient {
     String obtenetPorId(@PathVariable Long id);
 
     @PutMapping("/api/propiedades/{id}/estado")
-    void actualizarDisponibilidad(@PathVariable("id") int id);
+    void cambiarEstado(@PathVariable("id") int id);
 }
