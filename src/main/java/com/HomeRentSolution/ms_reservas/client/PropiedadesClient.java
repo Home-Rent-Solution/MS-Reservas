@@ -10,10 +10,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.math.BigDecimal;
 import java.util.List;
 
-@FeignClient(name = "ms-especialidades",
-url = "${ms.especialidades.url}")
+@FeignClient(name = "ms-propiedades",
+url = "${ms.propiedades.url}")
 
-public interface EspecialidadClient {
+public interface PropiedadesClient {
 
     @GetMapping("/api/propiedades")
     List<ReservaPropiedadDTO> obtenerTodas();
