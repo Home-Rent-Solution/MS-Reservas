@@ -41,4 +41,5 @@ public class Reserva {
     private Long idPropiedad;
 
 
+
 }
