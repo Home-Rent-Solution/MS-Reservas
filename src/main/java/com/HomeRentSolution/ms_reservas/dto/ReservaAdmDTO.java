@@ -11,16 +11,28 @@ import java.time.LocalDateTime;
 public class ReservaAdmDTO {
 
     private Integer idReserva;
+
     private Integer idPropiedad;
+
     private Integer idInquilino;
+
     private String nombreInquilino;
+
     private String tituloPropiedad;
+
     private String ubicacion;
+
     private Propiedades.TipoPropiedad tipoPropiedad;
+
     private LocalDate fechaInicio;
+
     private LocalDate fechaFin;
+
     private BigDecimal montoTotal;
+
     private String estado;
+
     private LocalDateTime fechaReserva;
+
     private LocalDateTime fechaLimitePago;
 }
