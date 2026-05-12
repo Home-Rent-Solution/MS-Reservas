@@ -4,6 +4,7 @@ import com.HomeRentSolution.ms_reservas.dto.ReservaPropiedadDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 
 import java.util.List;
 
@@ -12,9 +13,12 @@ url = "${ms.especialidades.url}")
 
 public interface EspecialidadClient {
 
-    @GetMapping("/api/propiedades") // El endpoint que exponga tu compañero
+    @GetMapping("/api/propiedades")
     List<ReservaPropiedadDTO> obtenerTodas();
 
     @GetMapping("/api/especialidades/{id}")
     String obtenetPorId(@PathVariable Long id);
+
+    @PutMapping("/api/propiedades/{id}/estado")
+    void actualizarDisponibilidad(@PathVariable("id") int id);
 }

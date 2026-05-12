@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 public class ReservaService {
 
     private final ReservaRepository reservaRepository;
-
+    private final ReservaPropiedadDTO propiedadClient;
 
     public List<ReservaPropiedadDTO> buscarDisponiblesParaCalendario(LocalDateTime inicio, LocalDateTime fin) {
         // 1. Traer TODAS las propiedades del micro de tu compañero vía Feign
