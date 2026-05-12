@@ -58,16 +58,15 @@ public class ReservaService {
     @Scheduled(fixedRate = 60000)
     public void cancelarReservasVencidas() {
         LocalDateTime ahora = LocalDateTime.now();
-        List<Reserva> vencidas = reservaRepository
-                .findByEstadoAndFechaLimitesPagoBefore(
-                        Reserva.EstadoReserva.PENDIENTE, ahora
+        List<Reserva> vencidas = reservaRepository.findByEstadoAndFechaLimitePagoBefore(
+                        EstadoReserva.PENDIENTE, ahora
                 );
 
         vencidas.forEach(reserva -> {
-            reserva.setEstado(Reserva.EstadoReserva.CANCELADA);
+            reserva.setEstado(EstadoReserva.CANCELADA);
             reservaRepository.save(reserva);
 
-            // Liberar la propiedad
+
             propiedadClient.cambiarEstado(reserva.getIdPropiedad());
         });
     }
