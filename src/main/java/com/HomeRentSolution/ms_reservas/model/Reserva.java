@@ -18,15 +18,19 @@ public class Reserva {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
     private Long idReserva;
+
+    @Column(name = "id_propiedad", nullable = false)
+    private Long idPropiedad;
+
+    @Column(name = "id_inquilino", nullable = false)
+    private Long idInquuilino;
 
     @Enumerated(EnumType.STRING)
     private EstadoReserva estado;
 
     @Column(nullable = false)
-    private LocalDateTime fechaCreacion;
+    private LocalDateTime fechaReserva;
 
     @Column(nullable = false)
     private LocalDateTime fechaInicio;
@@ -34,12 +38,10 @@ public class Reserva {
     @Column(nullable = false)
     private LocalDateTime fechaFin;
 
-    @Column(name = "id_inquilino", nullable = false)
-    private Long idInquuilino;
+    @Column(nullable = false)
+    private LocalDateTime fechaLimitesPago;
 
-    @Column(name = "id_propiedad", nullable = false)
-    private Long idPropiedad;
-
-
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal montoTotal;
 
 }
