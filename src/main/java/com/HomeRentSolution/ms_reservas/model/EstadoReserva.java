@@ -1,7 +1,8 @@
 package com.HomeRentSolution.ms_reservas.model;
 
+
 public enum EstadoReserva {
     PENDIENTE,
-    COMPLETADA,
+    CONFIRMADA,
     CANCELADA
 }
