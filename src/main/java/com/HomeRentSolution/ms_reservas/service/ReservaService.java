@@ -1,6 +1,6 @@
 package com.HomeRentSolution.ms_reservas.service;
 
-import com.HomeRentSolution.ms_reservas.client.InquilinosClient;
+import com.HomeRentSolution.ms_reservas.client.InquilinoClient;
 import com.HomeRentSolution.ms_reservas.client.PagosClient;
 import com.HomeRentSolution.ms_reservas.client.PropiedadesClient;
 import com.HomeRentSolution.ms_reservas.dto.ReservaClienteDTO;
@@ -11,14 +11,12 @@ import com.HomeRentSolution.ms_reservas.repository.ReservaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 @Service
@@ -27,7 +25,7 @@ public class ReservaService {
 
     private final ReservaRepository reservaRepository;
     private final PropiedadesClient propiedadClient;
-    private final InquilinosClient inquilinosClient;
+    private final InquilinoClient inquilinosClient;
     private final PagosClient pagosClient;
 
     public Reserva crearReserva(Reserva nuevaReserva) {

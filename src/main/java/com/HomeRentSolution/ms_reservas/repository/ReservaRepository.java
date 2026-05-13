@@ -16,8 +16,8 @@ import java.util.List;
 public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 
 
-        List<Reserva> findByIdInquilino(Long idInquilino);
-        List<Reserva> findByEstado(EstadoReserva estado, LocalDateTime fechaInicio, LocalDateTime fechaFin);
+        List<Reserva> findByBuscarPorIdInquilino(Long idInquilino);
+        List<Reserva> findByEstado(EstadoReserva estado);
         List<Reserva> findByEstadoAndFechaLimitePagoBefore(EstadoReserva estado, LocalDateTime fecha);
 
         @Query("SELECT COUNT(r) > 0 FROM Reserva r WHERE r.idPropiedad = :idPropiedad " +

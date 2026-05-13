@@ -5,10 +5,10 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient(name = "ms-inquilinos", url = "${ms-inquilinos.url}")
-public interface InquilinosClient {
+@FeignClient(name = "ms-inquilino", url = "${ms-inquilinos.url}")
+public interface InquilinoClient {
 
-    @GetMapping("/inquilinos/{id}")
+    @GetMapping("/inquilino/{id}")
     Object getInquilinoPorId(@PathVariable Long id);
 
     @GetMapping("/api/propiedades/{id}")
