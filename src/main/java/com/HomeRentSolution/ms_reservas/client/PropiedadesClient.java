@@ -1,6 +1,9 @@
 package com.HomeRentSolution.ms_reservas.client;
 
 import com.HomeRentSolution.ms_reservas.dto.ReservaPropiedadDTO;
+import com.HomeRentSolution.ms_reservas.model.EstadoReserva;
+import com.HomeRentSolution.ms_reservas.model.Reserva;
+import feign.Param;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,25 +16,24 @@ import java.util.List;
 
 @FeignClient(name = "ms-propiedades",
 url = "${ms.propiedades.url}")
-@EnableScheduling
 public interface PropiedadesClient {
 
-    @GetMapping("/api/propiedades/{id}")
+    @GetMapping("/api/v1/propiedades/{id}")
     ReservaPropiedadDTO obtenerPropiedadPorId(@PathVariable("id") Long idPropiedad);
 
-    @GetMapping("/api/propiedades")
+    @GetMapping("/api/v1/propiedades")
     List<ReservaPropiedadDTO> obtenerTodas();
 
-    @GetMapping("/propiedades/buscar")
+    @GetMapping("/api/v1/propiedades/buscar")
     List<ReservaPropiedadDTO> buscarPorUbicacionYPrecio(
             @RequestParam String ubicacion,
             @RequestParam BigDecimal precioMin,
             @RequestParam BigDecimal precioMax
     );
 
-    @GetMapping("/propiedades/disponibles")
+    @GetMapping("/api/v1/propiedades/disponibles")
     List<ReservaPropiedadDTO> getPropiedadesDisponibles();
 
-    @PutMapping("/api/propiedades/{id}/estado")
+    @PutMapping("/api/v1/propiedades/{id}/estado")
     void cambiarEstado(@PathVariable("id") Long id);
 }
