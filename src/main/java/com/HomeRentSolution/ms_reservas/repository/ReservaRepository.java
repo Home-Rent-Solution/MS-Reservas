@@ -1,6 +1,7 @@
 package com.HomeRentSolution.ms_reservas.repository;
 
 import com.HomeRentSolution.ms_reservas.dto.ReservaPropiedadDTO;
+import com.HomeRentSolution.ms_reservas.model.EstadoPropiedad;
 import com.HomeRentSolution.ms_reservas.model.EstadoReserva;
 import com.HomeRentSolution.ms_reservas.model.Reserva;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,6 +19,7 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 
         List<Reserva> findByBuscarPorIdInquilino(Long idInquilino);
         List<Reserva> findByEstado(EstadoReserva estado);
+        List<Reserva> findByEstado(EstadoPropiedad estadoPropiedad);
         List<Reserva> findByEstadoAndFechaLimitePagoBefore(EstadoReserva estado, LocalDateTime fecha);
 
         @Query("SELECT COUNT(r) > 0 FROM Reserva r WHERE r.idPropiedad = :idPropiedad " +

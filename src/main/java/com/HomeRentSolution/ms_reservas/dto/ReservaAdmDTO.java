@@ -22,8 +22,6 @@ public class ReservaAdmDTO {
 
     private String ubicacion;
 
-    private Propiedades.TipoPropiedad tipoPropiedad;
-
     private LocalDate fechaInicio;
 
     private LocalDate fechaFin;
