@@ -39,15 +39,14 @@ public class ReservaService {
         ReservaPropiedadDTO propiedadPorId = propiedadClient.obtenerPropiedadPorId(nuevaReserva.getIdReserva());
         return nuevaReserva;
     }
-    //buscarDisponibilidad()
-    //crearReserva
-    //private validarDisponibilidad()
+    //buscarDisponibilidad() *
+    //crearReserva *
+    //private boolean validarDisponibilidad()
     //private obtenerPrecios()
-    //guardarReserva()
-    //generarPago()
+    //private void generarPago()
     //public void cancelarReserva()
     //public void confirmarReserva()
     //public obtenerReservasCliente()
-    //enviarConfirmacion()
+    //private void enviarConfirmacion()
 }
 
