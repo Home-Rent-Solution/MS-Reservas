@@ -3,21 +3,13 @@ package com.HomeRentSolution.ms_reservas.service;
 import com.HomeRentSolution.ms_reservas.client.InquilinoClient;
 import com.HomeRentSolution.ms_reservas.client.PagosClient;
 import com.HomeRentSolution.ms_reservas.client.PropiedadesClient;
-import com.HomeRentSolution.ms_reservas.dto.ReservaClienteDTO;
+import com.HomeRentSolution.ms_reservas.dto.ReservaInquilinoDTO;
 import com.HomeRentSolution.ms_reservas.dto.ReservaPropiedadDTO;
-import com.HomeRentSolution.ms_reservas.model.EstadoReserva;
-import com.HomeRentSolution.ms_reservas.model.Reserva;
-import com.HomeRentSolution.ms_reservas.repository.ReservaRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 
@@ -35,7 +27,7 @@ public class ReservaService {
             String ubicacion
     ) { return buscarDisponibles();}
 
-    public ReservaClienteDTO crearReserva(ReservaClienteDTO nuevaReserva){
+    public ReservaInquilinoDTO crearReserva(ReservaInquilinoDTO nuevaReserva){
         ReservaPropiedadDTO propiedadPorId = propiedadClient.obtenerPropiedadPorId(nuevaReserva.getIdReserva());
         return nuevaReserva;
     }

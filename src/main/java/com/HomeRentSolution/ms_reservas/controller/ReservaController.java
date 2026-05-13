@@ -1,8 +1,7 @@
 package com.HomeRentSolution.ms_reservas.controller;
 
 import com.HomeRentSolution.ms_reservas.dto.ReservaAdmDTO;
-import com.HomeRentSolution.ms_reservas.dto.ReservaClienteDTO;
-import com.HomeRentSolution.ms_reservas.model.Reserva;
+import com.HomeRentSolution.ms_reservas.dto.ReservaInquilinoDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +23,7 @@ public class ReservaController {
     @GetMapping("/{id}/cliente")
     public ResponseEntity<?> getParaCliente(@PathVariable Long id) {
         try {
-            ReservaClienteDTO dto = reservasService.obtenerParaCliente(id);
+            ReservaInquilinoDTO dto = reservasService.obtenerParaCliente(id);
             return ResponseEntity.ok(dto);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
@@ -44,7 +43,7 @@ public class ReservaController {
 
     // Crear reserva
     @PostMapping
-    public ResponseEntity<?> crearReserva(@RequestBody ReservaClienteDTO nuevaReserva) {
+    public ResponseEntity<?> crearReserva(@RequestBody ReservaInquilinoDTO nuevaReserva) {
         try {
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(reservasService.crearReserva(nuevaReserva));

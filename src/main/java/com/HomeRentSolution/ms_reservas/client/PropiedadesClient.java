@@ -17,7 +17,7 @@ url = "${ms.propiedades.url}")
 public interface PropiedadesClient {
 
     @GetMapping("/api/propiedades/{id}")
-    ReservaPropiedadDTO obtenerPropiedadPorId(@PathVariable("id") Long id);
+    ReservaPropiedadDTO obtenerPropiedadPorId(@PathVariable("id") Long idPropiedad);
 
     @GetMapping("/api/propiedades")
     List<ReservaPropiedadDTO> obtenerTodas();

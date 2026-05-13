@@ -5,10 +5,11 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient(name = "ms-pagos", url = "${ms-pagos.url}")
+@FeignClient(name = "ms-precios", url = "${ms.precios.url}")
 @EnableScheduling
-public interface PagosClient {
+public interface PrecioClient {
 
-    @GetMapping("/api/pagos/{idReserva}")
-    Boolean verificarPagoReserva(@PathVariable Long idPago);
+    @GetMapping("/api/precio/{idPrecios}")
+    Boolean verificarPrecioPorId(@PathVariable Long idPrecios);
+
 }
