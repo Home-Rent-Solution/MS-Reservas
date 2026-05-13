@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 @Data
 public class ReservaClienteDTO {
-    private Integer idReserva;
+    private Long idReserva;
 
     private String tituloPropiedad;
 

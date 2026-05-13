@@ -11,9 +11,11 @@ import com.HomeRentSolution.ms_reservas.repository.ReservaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
 
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -23,88 +25,29 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ReservaService {
 
-    private final ReservaRepository reservaRepository;
     private final PropiedadesClient propiedadClient;
     private final InquilinoClient inquilinosClient;
     private final PagosClient pagosClient;
 
-    public Reserva crearReserva(Reserva nuevaReserva) {
-        ReservaPropiedadDTO propiedad = propiedadClient.obtenerPropiedadPorId(nuevaReserva.getIdPropiedad());
+    public List<ReservaPropiedadDTO> buscarDisponibles(
+            LocalDate inicio,
+            LocalDate fin,
+            String ubicacion
+    ) { return buscarDisponibles();}
 
-
-        if (!propiedad.isDisponible()) {
-            throw new RuntimeException("La propiedad no está disponible");
-        }
-
-        long dias = ChronoUnit.DAYS.between(
-                nuevaReserva.getFechaInicio(), nuevaReserva.getFechaFin()
-        );
-        nuevaReserva.setMontoTotal(propiedad.getPrecio().multiply(BigDecimal.valueOf(dias)));
-
-        nuevaReserva.setFechaReserva(LocalDateTime.now());
-        nuevaReserva.setFechaLimitesPago(LocalDateTime.now().plusHours(1));
-        nuevaReserva.setEstado(EstadoReserva.PENDIENTE);
-
-        try {
-            propiedadClient.cambiarEstado(nuevaReserva.getIdPropiedad());
-        } catch (Exception e) {
-            throw new RuntimeException("Error al conectar con el microservicio de propiedades: " + e.getMessage());
-        }
-
-        return reservaRepository.save(nuevaReserva);
+    public ReservaClienteDTO crearReserva(ReservaClienteDTO nuevaReserva){
+        ReservaPropiedadDTO propiedadPorId = propiedadClient.obtenerPropiedadPorId(nuevaReserva.getIdReserva());
+        return nuevaReserva;
     }
-
-    @Scheduled(fixedRate = 60000)
-    public void cancelarReservasVencidas() {
-        LocalDateTime ahora = LocalDateTime.now();
-        List<Reserva> vencidas = reservaRepository.findByEstadoAndFechaLimitePagoBefore(
-                        EstadoReserva.PENDIENTE, ahora
-                );
-
-        vencidas.forEach(reserva -> {
-            reserva.setEstado(EstadoReserva.CANCELADA);
-            reservaRepository.save(reserva);
-
-
-            propiedadClient.cambiarEstado(reserva.getIdPropiedad());
-        });
-    }
-
-    public ReservaClienteDTO obtenerParaCliente(Long id) {
-        Reserva reserva = reservaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Reserva no encontrada"));
-
-        ReservaPropiedadDTO propiedad = propiedadClient.getPropiedadesDisponibles(reserva.getIdPropiedad());
-
-
-        ReservaClienteDTO dto = new ReservaClienteDTO();
-        dto.setIdReserva(reserva.getIdReserva());
-        dto.setTituloPropiedad(propiedad.getTitulo());
-        dto.setUbicacion(propiedad.getUbicacion());
-        dto.setFechaInicio(reserva.getFechaInicio());
-        dto.setFechaFin(reserva.getFechaFin());
-        dto.setMontoTotal(reserva.getMontoTotal());
-        dto.setEstado(reserva.getEstado().toString());
-        dto.setFechaLimitePago(reserva.getFechaLimitesPago());
-        return dto;
-    }
-    // Arma el DTO cliente: solo llama a PropiedadesClient
-    public ReservaClienteDTO obtenerParaCliente(int id) {
-        Reserva reserva = reservasRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Reserva no encontrada"));
-
-        ReservaPropiedadDTO propiedad = propiedadesClient
-                .getPropiedadPorId(reserva.getIdPropiedad());
-
-        ReservaClienteDTO dto = new ReservaClienteDTO();
-        dto.setIdReserva(reserva.getIdReserva());
-        dto.setTituloPropiedad(propiedad.getTitulo());
-        dto.setUbicacion(propiedad.getUbicacion());
-        dto.setFechaInicio(reserva.getFechaInicio());
-        dto.setFechaFin(reserva.getFechaFin());
-        dto.setMontoTotal(reserva.getMontoTotal());
-        dto.setEstado(reserva.getEstado().toString());
-        dto.setFechaLimitePago(reserva.getFechaLimitesPago());
-        return dto;
-    }
+    //buscarDisponibilidad()
+    //crearReserva
+    //private validarDisponibilidad()
+    //private obtenerPrecios()
+    //guardarReserva()
+    //generarPago()
+    //public void cancelarReserva()
+    //public void confirmarReserva()
+    //public obtenerReservasCliente()
+    //enviarConfirmacion()
 }
+
