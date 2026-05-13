@@ -22,7 +22,7 @@ public class ReservaController {
 
     // Vista cliente
     @GetMapping("/{id}/cliente")
-    public ResponseEntity<?> getParaCliente(@PathVariable int id) {
+    public ResponseEntity<?> getParaCliente(@PathVariable Long id) {
         try {
             ReservaClienteDTO dto = reservasService.obtenerParaCliente(id);
             return ResponseEntity.ok(dto);
@@ -33,7 +33,7 @@ public class ReservaController {
 
     // Vista administrador
     @GetMapping("/{id}/admin")
-    public ResponseEntity<?> getParaAdmin(@PathVariable int id) {
+    public ResponseEntity<?> getParaAdmin(@PathVariable Long id) {
         try {
             ReservaAdmDTO dto = reservasService.obtenerParaAdmin(id);
             return ResponseEntity.ok(dto);

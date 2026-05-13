@@ -1,5 +1,6 @@
 package com.HomeRentSolution.ms_reservas.service;
 
+import com.HomeRentSolution.ms_reservas.client.InquilinosClient;
 import com.HomeRentSolution.ms_reservas.client.PagosClient;
 import com.HomeRentSolution.ms_reservas.client.PropiedadesClient;
 import com.HomeRentSolution.ms_reservas.dto.ReservaClienteDTO;
@@ -26,6 +27,7 @@ public class ReservaService {
 
     private final ReservaRepository reservaRepository;
     private final PropiedadesClient propiedadClient;
+    private final InquilinosClient inquilinosClient;
     private final PagosClient pagosClient;
 
     public Reserva crearReserva(Reserva nuevaReserva) {
@@ -36,7 +38,6 @@ public class ReservaService {
             throw new RuntimeException("La propiedad no está disponible");
         }
 
-        // 2. Calcular monto total (precio * días)
         long dias = ChronoUnit.DAYS.between(
                 nuevaReserva.getFechaInicio(), nuevaReserva.getFechaFin()
         );
@@ -69,5 +70,43 @@ public class ReservaService {
 
             propiedadClient.cambiarEstado(reserva.getIdPropiedad());
         });
+    }
+
+    public ReservaClienteDTO obtenerParaCliente(Long id) {
+        Reserva reserva = reservaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Reserva no encontrada"));
+
+        ReservaPropiedadDTO propiedad = propiedadClient.getPropiedadesDisponibles(reserva.getIdPropiedad());
+
+
+        ReservaClienteDTO dto = new ReservaClienteDTO();
+        dto.setIdReserva(reserva.getIdReserva());
+        dto.setTituloPropiedad(propiedad.getTitulo());
+        dto.setUbicacion(propiedad.getUbicacion());
+        dto.setFechaInicio(reserva.getFechaInicio());
+        dto.setFechaFin(reserva.getFechaFin());
+        dto.setMontoTotal(reserva.getMontoTotal());
+        dto.setEstado(reserva.getEstado().toString());
+        dto.setFechaLimitePago(reserva.getFechaLimitesPago());
+        return dto;
+    }
+    // Arma el DTO cliente: solo llama a PropiedadesClient
+    public ReservaClienteDTO obtenerParaCliente(int id) {
+        Reserva reserva = reservasRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Reserva no encontrada"));
+
+        ReservaPropiedadDTO propiedad = propiedadesClient
+                .getPropiedadPorId(reserva.getIdPropiedad());
+
+        ReservaClienteDTO dto = new ReservaClienteDTO();
+        dto.setIdReserva(reserva.getIdReserva());
+        dto.setTituloPropiedad(propiedad.getTitulo());
+        dto.setUbicacion(propiedad.getUbicacion());
+        dto.setFechaInicio(reserva.getFechaInicio());
+        dto.setFechaFin(reserva.getFechaFin());
+        dto.setMontoTotal(reserva.getMontoTotal());
+        dto.setEstado(reserva.getEstado().toString());
+        dto.setFechaLimitePago(reserva.getFechaLimitesPago());
+        return dto;
     }
 }

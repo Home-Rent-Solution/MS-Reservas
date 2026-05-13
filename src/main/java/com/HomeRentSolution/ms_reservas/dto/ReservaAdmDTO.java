@@ -10,11 +10,11 @@ import java.time.LocalDateTime;
 @Data
 public class ReservaAdmDTO {
 
-    private Integer idReserva;
+    private Long idReserva;
 
-    private Integer idPropiedad;
+    private Long idPropiedad;
 
-    private Integer idInquilino;
+    private Long idInquilino;
 
     private String nombreInquilino;
 

@@ -10,5 +10,5 @@ import org.springframework.web.bind.annotation.PathVariable;
 public interface PagosClient {
 
     @GetMapping("/pagos/reserva/{idReserva}")
-    Boolean verificarPagoReserva(@PathVariable int idReserva);
+    Boolean verificarPagoReserva(@PathVariable Long idReserva);
 }
