@@ -3,10 +3,7 @@ package com.HomeRentSolution.ms_reservas.service;
 import com.HomeRentSolution.ms_reservas.client.InquilinoClient;
 import com.HomeRentSolution.ms_reservas.client.PagosClient;
 import com.HomeRentSolution.ms_reservas.client.PropiedadesClient;
-import com.HomeRentSolution.ms_reservas.dto.ReservaFiltrosDTO;
-import com.HomeRentSolution.ms_reservas.dto.ReservaInquilinoDTO;
-import com.HomeRentSolution.ms_reservas.dto.ReservaPrecioDTO;
-import com.HomeRentSolution.ms_reservas.dto.ReservaPropiedadDTO;
+import com.HomeRentSolution.ms_reservas.dto.*;
 import com.HomeRentSolution.ms_reservas.model.EstadoPropiedad;
 import com.HomeRentSolution.ms_reservas.model.EstadoReserva;
 import com.HomeRentSolution.ms_reservas.model.Reserva;
@@ -36,6 +33,10 @@ public class ReservaService {
     private List<ReservaPropiedadDTO> buscarConFiltro(ReservaFiltrosDTO filtrosDTO) {
 
         List<ReservaPropiedadDTO> todasPropiedades = propiedadClient.obtenerTodas();
+
+        // Marca disponibilidad sobre la lista según el rango de fechas
+        List<Reserva> reservas = reservaRepository.findAll();
+        completarDisponibilidad(reservas, todasPropiedades, filtrosDTO.getFechaInicio(), filtrosDTO.getFechaFin());
 
         return todasPropiedades.stream()
                 .filter(p -> cumpleEstado(p, filtrosDTO.getEstadoPropiedad()))
@@ -91,10 +92,13 @@ public class ReservaService {
     }
 
 
-    public ReservaInquilinoDTO crearReserva(ReservaInquilinoDTO nuevaReserva){
-        ReservaPropiedadDTO propiedadPorId = propiedadClient.obtenerPropiedadPorId(nuevaReserva.getIdInquilino());
-        return nuevaReserva;
-    }
+    public ReservaDTO validarDisponibilidad(dto.getIdPropiedad());
+
+    // Si pasa la validación, procede a guardar
+    Reserva reserva = reservaMapper.toEntity(dto);
+    reservaRepository.save(reserva);
+
+    return reservaMapper.toDTO(reserva);
 
     private boolean validarDisponibilidad(PropiedadesClient propiedadDisponible){
 
