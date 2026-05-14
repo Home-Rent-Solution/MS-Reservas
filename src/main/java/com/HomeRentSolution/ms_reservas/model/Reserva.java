@@ -24,7 +24,7 @@ public class Reserva {
     private Long idPropiedad;
 
     @Column(name = "id_inquilino", nullable = false)
-    private Long idInquuilino;
+    private Long idInquilino;
 
     @Enumerated(EnumType.STRING)
     private EstadoReserva estado;

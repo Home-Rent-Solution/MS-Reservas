@@ -16,7 +16,7 @@ public class ReservaDTO {
 
     private Long idPropiedad;
 
-    private Long idInquuilino;
+    private Long idInquilino;
 
     private EstadoReserva estado;
 

@@ -43,10 +43,10 @@ public class ReservaController {
 
     // Crear reserva
     @PostMapping
-    public ResponseEntity<?> crearReserva(@RequestBody ReservaInquilinoDTO nuevaReserva) {
+    public ResponseEntity<?> crearReserva(@RequestBody ReservaInquilinoDTO dto) {
         try {
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(reservasService.crearReserva(nuevaReserva));
+                    .body(reservasService.crearReserva(dto));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

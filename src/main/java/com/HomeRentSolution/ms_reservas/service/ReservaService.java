@@ -5,6 +5,7 @@ import com.HomeRentSolution.ms_reservas.client.PagosClient;
 import com.HomeRentSolution.ms_reservas.client.PropiedadesClient;
 import com.HomeRentSolution.ms_reservas.client.PrecioClient;
 import com.HomeRentSolution.ms_reservas.dto.ReservaPrecioDTO;
+import com.HomeRentSolution.ms_reservas.dto.ReservaPagosDTO;
 import com.HomeRentSolution.ms_reservas.dto.*;
 import com.HomeRentSolution.ms_reservas.exception.PropiedadNoDisponibleException;
 import com.HomeRentSolution.ms_reservas.exception.RecursoNoEncontradoException;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -52,6 +54,42 @@ public class ReservaService {
         // Asocia precios a las propiedades disponibles
         return obtenerPrecios(propiedadesDisponibles);
 
+    }
+
+    public ReservaDTO crearReserva(ReservaAdmDTO dto) {
+
+        // 1. Validar disponibilidad
+        validarDisponibilidad(dto.getIdPropiedad());
+
+        // 2. Construir y guardar la reserva
+        Reserva reserva = new Reserva();
+        reserva.setIdPropiedad(dto.getIdPropiedad());
+        reserva.setIdInquilino(dto.getIdInquilino());
+        reserva.setFechaInicio(dto.getFechaInicio().atStartOfDay());
+        reserva.setFechaFin(dto.getFechaFin().atStartOfDay());
+        reserva.setEstado(EstadoReserva.PENDIENTE);
+        reserva.setFechaReserva(LocalDateTime.now());
+        reserva.setFechaLimitesPago(LocalDateTime.now().plusDays(3));
+        reserva.setMontoTotal(BigDecimal.ZERO);
+
+        reservaRepository.save(reserva);
+
+        // 3. Generar pago en MS-Pagos
+        generarPago(reserva);
+
+        // 4. Retorno manual
+        ReservaDTO response = new ReservaDTO();
+        response.setIdReserva(reserva.getIdReserva());
+        response.setIdPropiedad(reserva.getIdPropiedad());
+        response.setIdInquilino(reserva.getIdInquilino());
+        response.setEstado(reserva.getEstado());
+        response.setFechaReserva(reserva.getFechaReserva());
+        response.setFechaInicio(reserva.getFechaInicio());
+        response.setFechaFin(reserva.getFechaFin());
+        response.setFechaLimitesPago(reserva.getFechaLimitesPago());
+        response.setMontoTotal(reserva.getMontoTotal());
+
+        return response;
     }
 
     private boolean cumpleEstado(ReservaPropiedadDTO p, EstadoPropiedad estadoFiltro) {
@@ -141,6 +179,41 @@ public class ReservaService {
                     return dto;
                 })
                 .collect(Collectors.toList());
+    }
+
+    private void generarPago(Reserva reserva) {
+
+        // 1. Obtener precio base de la propiedad
+        ReservaPropiedadDTO propiedad = propiedadClient.obtenerPropiedadPorId(
+                reserva.getIdPropiedad()
+        );
+
+        // 2. Obtener multiplicador de MS-Precios
+        ReservaPrecioDTO precio = precioClient.obtenerPrecioPorPropiedad(
+                reserva.getIdPropiedad()
+        );
+
+        // 3. Calcular número de días
+        long numeroDias = ChronoUnit.DAYS.between(
+                reserva.getFechaInicio(),
+                reserva.getFechaFin()
+        );
+
+        // 4. Calcular monto total
+        BigDecimal montoCalculado = propiedad.getPrecio()
+                .multiply(BigDecimal.valueOf(precio.getMultiplicador()))
+                .multiply(BigDecimal.valueOf(numeroDias));
+
+        // 5.
+        ReservaPagosDTO pagoDTO = new ReservaPagosDTO();
+        pagoDTO.setIdReserva(reserva.getIdReserva());
+        pagoDTO.setIdInquilino(reserva.getIdInquilino());
+        pagoDTO.setIdPropiedad(reserva.getIdPropiedad());
+        pagoDTO.setMontoTotal(montoCalculado);
+        pagoDTO.setFechaVencimiento(reserva.getFechaLimitesPago());
+        pagoDTO.setNumeroCuotas(1);
+
+        pagosClient.crearPago(pagoDTO);
     }
 
 
