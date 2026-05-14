@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 
@@ -40,7 +41,6 @@ public class ReservaService {
                 .filter(p -> cumpleEstado(p, filtrosDTO.getEstadoPropiedad()))
                 .filter(p -> cumpleUbicacion(p, filtrosDTO.getUbicacion()))
                 .filter(p -> cumpleRangoPrecio(p, filtrosDTO.getPrecioMin(), filtrosDTO.getPrecioMax()))
-                .filter(p -> estaDisponible(p, filtrosDTO.getFechaInicio(), filtrosDTO.getFechaFin()))
                 .collect(Collectors.toList());
 
     }
@@ -62,13 +62,32 @@ public class ReservaService {
         return cumpleMin && cumpleMax;
     }
 
-    private boolean cumpleDisponibilidad(Reserva p, LocalDateTime inicio, LocalDateTime fin, EstadoReserva estadoReserva) {
+    private void completarDisponibilidad(List<Reserva> reservas,
+                                         List<ReservaPropiedadDTO> propiedades,
+                                         LocalDateTime inicio,
+                                         LocalDateTime fin) {
 
-        if (inicio == null || fin == null) return true;
-        if (estadoReserva == null || estadoReserva == "CANCELADA") return true;
+        if (inicio == null || fin == null) return;
 
+        // IDs de propiedades que tienen reservas ACTIVAS en ese rango
+        Set<Long> propiedadesOcupadas = reservas.stream()
+                .filter(r -> estaEnRango(r, inicio, fin))
+                .filter(r -> r.getEstado() != null && r.getEstado() != EstadoReserva.CANCELADA)
+                .map(Reserva::getIdPropiedad)
+                .collect(Collectors.toSet());
 
-        return;
+        // Las que no están ocupadas → DISPONIBLE
+        propiedades.forEach(p -> {
+            if (!propiedadesOcupadas.contains(p.getIdPropiedad().longValue())) {
+                p.setEstadoPropiedad(EstadoPropiedad.DISPONIBLE);
+                p.setDisponible(true);
+            }
+        });
+    }
+
+    private boolean estaEnRango(Reserva reserva, LocalDateTime inicio, LocalDateTime fin) {
+        return !reserva.getFechaInicio().isAfter(fin)
+                && !reserva.getFechaFin().isBefore(inicio);
     }
 
 

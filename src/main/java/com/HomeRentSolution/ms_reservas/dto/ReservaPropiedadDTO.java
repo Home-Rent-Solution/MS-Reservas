@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 @Data
 public class ReservaPropiedadDTO {
 
-    private Integer idPropiedad;
+    private Long idPropiedad;
 
     private String titulo;
 
@@ -19,7 +19,7 @@ public class ReservaPropiedadDTO {
 
     private BigDecimal precio;
 
-    private Integer idAnfitrion;
+    private Long idAnfitrion;
 
     private String tipo;
 
