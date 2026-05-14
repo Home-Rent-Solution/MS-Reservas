@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 public class ReservaFiltrosDTO {
 
     private Long idReserva;
-    private EstadoReserva estado;
+    private EstadoReserva estadoReserva;
     private LocalDateTime fechaReserva;
     private LocalDateTime fechaFin;
     private LocalDateTime fechaLimitesPago;
@@ -23,7 +23,6 @@ public class ReservaFiltrosDTO {
     private Long idPropiedad;
     private String ubicacion;
     private EstadoPropiedad estadoPropiedad;
-    private EstadoReserva estadoReserva;
     private BigDecimal precioMin;
     private BigDecimal precioMax;
     private LocalDateTime fechaInicio;
@@ -41,5 +40,9 @@ public class ReservaFiltrosDTO {
     private String contenido;
     private Long idEmisor;
     private Long idReceptor;
+
+    private Long idLimpieza;
+    private LocalDateTime fechaProgramada;
+    private String estadoLimpieza;
 
 }

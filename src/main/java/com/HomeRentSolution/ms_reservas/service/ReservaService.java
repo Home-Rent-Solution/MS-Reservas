@@ -12,6 +12,7 @@ import com.HomeRentSolution.ms_reservas.model.Reserva;
 import com.HomeRentSolution.ms_reservas.repository.ReservaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -36,6 +37,8 @@ public class ReservaService {
     private final InquilinoClient inquilinosClient;
     private final PagosClient pagosClient;
     private final MensajeriaClient mensajeriaClient;
+    @Autowired
+    private limpiezaClient limpiezaClient;
 
     private List<ReservaFiltrosDTO> buscarConFiltro(ReservaFiltrosDTO filtrosDTO) {
 
@@ -67,7 +70,7 @@ public class ReservaService {
         reserva.setIdInquilino(dto.getIdInquilino());
         reserva.setFechaInicio(dto.getFechaInicio().atStartOfDay());
         reserva.setFechaFin(dto.getFechaFin().atStartOfDay());
-        reserva.setEstado(EstadoReserva.PENDIENTE);
+        reserva.setEstadoReserva(EstadoReserva.PENDIENTE);
         reserva.setFechaReserva(LocalDateTime.now());
         reserva.setFechaLimitesPago(LocalDateTime.now().plusDays(3));
         reserva.setMontoTotal(BigDecimal.ZERO);
@@ -82,7 +85,7 @@ public class ReservaService {
         response.setIdReserva(reserva.getIdReserva());
         response.setIdPropiedad(reserva.getIdPropiedad());
         response.setIdInquilino(reserva.getIdInquilino());
-        response.setEstado(reserva.getEstado());
+        response.setEstado(reserva.getEstadoReserva());
         response.setFechaReserva(reserva.getFechaReserva());
         response.setFechaInicio(reserva.getFechaInicio());
         response.setFechaFin(reserva.getFechaFin());
@@ -119,7 +122,7 @@ public class ReservaService {
         // IDs de propiedades que tienen reservas ACTIVAS en ese rango
         Set<Long> propiedadesOcupadas = reservas.stream()
                 .filter(r -> estaEnRango(r, inicio, fin))
-                .filter(r -> r.getEstado() != null && r.getEstado() != EstadoReserva.CANCELADA)
+                .filter(r -> r.getEstadoReserva() != null && r.getEstadoReserva() != EstadoReserva.CANCELADA)
                 .map(Reserva::getIdPropiedad)
                 .collect(Collectors.toSet());
 
@@ -232,10 +235,10 @@ public class ReservaService {
                 ));
 
         // 2. Validar que no esté ya cancelada o finalizada
-        if (reserva.getEstado() == EstadoReserva.CANCELADA ||
-                reserva.getEstado() == EstadoReserva.FINALIZADA) {
+        if (reserva.getEstadoReserva() == EstadoReserva.CANCELADA ||
+                reserva.getEstadoReserva() == EstadoReserva.FINALIZADA) {
             throw new RuntimeException(
-                    "La reserva no puede cancelarse porque está en estado: " + reserva.getEstado()
+                    "La reserva no puede cancelarse porque está en estado: " + reserva.getEstadoReserva()
             );
         }
 
@@ -249,25 +252,26 @@ public class ReservaService {
         BigDecimal porcentajeReembolso;
 
         if (horasRestantes > 72) {
-            porcentajeReembolso = BigDecimal.ONE;           // 100%
+            porcentajeReembolso = BigDecimal.ONE;
         } else if (horasRestantes > 24) {
-            porcentajeReembolso = new BigDecimal("0.5");    // 50%
+            porcentajeReembolso = new BigDecimal("0.5");
         } else {
-            porcentajeReembolso = BigDecimal.ZERO;          // 0%
+            porcentajeReembolso = BigDecimal.ZERO;
         }
 
         BigDecimal monto = reserva.getMontoTotal()
                 .multiply(porcentajeReembolso);
 
         // 5. Cambiar estado a CANCELADA
-        reserva.setEstado(EstadoReserva.CANCELADA);
+        reserva.setEstadoReserva(EstadoReserva.CANCELADA);
         reservaRepository.save(reserva);
 
         // 6. Notificar a MS-Pagos con el monto a reembolsar
-        pagosClient.cancelarPago(idReserva, motivo, montoReembolso);
+        pagosClient.cancelarPago(idReserva, motivo, monto);
 
-        // 7. Liberar disponibilidad en MS-Propiedades
-        propiedadClient.cambiarEstado(reserva.getIdPropiedad());
+        // 7. Agendar limpieza inmediata (reemplaza propiedadClient.cambiarEstado())
+        // MS-Limpieza se encargará de marcar la propiedad como DISPONIBLE al terminar
+        agendarLimpieza(reserva, LocalDateTime.now());
     }
 
     public ReservaDTO confirmarReserva(Long idReserva) {
@@ -279,15 +283,15 @@ public class ReservaService {
                 ));
 
         // 2. Validar que esté en estado PENDIENTE
-        if (reserva.getEstado() != EstadoReserva.PENDIENTE) {
+        if (reserva.getEstadoReserva() != EstadoReserva.PENDIENTE) {
             throw new RuntimeException(
-                    "La reserva no puede confirmarse porque está en estado: " + reserva.getEstado()
+                    "La reserva no puede confirmarse porque está en estado: " + reserva.getEstadoReserva()
             );
         }
 
         // 3. Validar que no haya vencido el plazo de pago
         if (LocalDateTime.now().isAfter(reserva.getFechaLimitesPago())) {
-            reserva.setEstado(EstadoReserva.CANCELADA);
+            reserva.setEstadoReserva(EstadoReserva.CANCELADA);
             reservaRepository.save(reserva);
             throw new RuntimeException(
                     "La reserva venció su fecha límite de pago y fue cancelada automáticamente."
@@ -298,7 +302,7 @@ public class ReservaService {
         pagosClient.confirmarPago(idReserva);
 
         // 5. Cambiar estado a CONFIRMADA
-        reserva.setEstado(EstadoReserva.COMPLETADA);
+        reserva.setEstadoReserva(EstadoReserva.COMPLETADA);
         reservaRepository.save(reserva);
 
         // 6. Actualizar disponibilidad en MS-Propiedades
@@ -309,7 +313,7 @@ public class ReservaService {
         response.setIdReserva(reserva.getIdReserva());
         response.setIdPropiedad(reserva.getIdPropiedad());
         response.setIdInquilino(reserva.getIdInquilino());
-        response.setEstado(reserva.getEstado());
+        response.setEstado(reserva.getEstadoReserva());
         response.setFechaReserva(reserva.getFechaReserva());
         response.setFechaInicio(reserva.getFechaInicio());
         response.setFechaFin(reserva.getFechaFin());
@@ -355,7 +359,7 @@ public class ReservaService {
 
         // Datos base de la reserva
         dto.setIdReserva(reserva.getIdReserva());
-        dto.setEstado(reserva.getEstado());
+        dto.setEstadoReserva(reserva.getEstadoReserva());
         dto.setFechaReserva(reserva.getFechaReserva());
         dto.setFechaInicio(reserva.getFechaInicio());
         dto.setFechaFin(reserva.getFechaFin());
@@ -456,6 +460,67 @@ public class ReservaService {
             log.error("[MS-Reservas] Error al enviar confirmación al inquilino ID: {}. Error: {}",
                     reserva.getIdInquilino(), e.getMessage());
         }
+    }
+
+    public ReservaFiltrosDTO finalizarReserva(Long idReserva) {
+
+        // 1. Buscar la reserva
+        Reserva reserva = reservaRepository.findById(idReserva)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Reserva no encontrada con ID: " + idReserva
+                ));
+
+        // 2. Validar que esté CONFIRMADA
+        if (reserva.getEstadoReserva() != EstadoReserva.COMPLETADA) {
+            throw new RuntimeException(
+                    "La reserva no puede finalizarse porque está en estado: " + reserva.getEstadoReserva()
+            );
+        }
+
+        // 3. Cambiar estado a FINALIZADA
+        reserva.setEstadoReserva(EstadoReserva.FINALIZADA);
+        reservaRepository.save(reserva);
+
+        // 4. Agendar limpieza al fin de la reserva
+        // MS-Limpieza se encargará de marcar la propiedad como DISPONIBLE al terminar
+        ReservaFiltrosDTO response = agendarLimpieza(reserva, reserva.getFechaFin());
+
+        return response;
+    }
+    private ReservaFiltrosDTO agendarLimpieza(Reserva reserva, LocalDateTime fechaProgramada) {
+        // 1. Preparamos la petición para el microservicio de limpieza
+        // Usamos los campos idPropiedad e idReserva que ya tienes en tu entidad Reserva
+        ReservaLimpiezaDTO request = new ReservaLimpiezaDTO();
+        request.setIdPropiedad(reserva.getIdPropiedad());
+        request.setIdReserva(reserva.getIdReserva());
+        request.setFechaProgramada(fechaProgramada);
+
+        // 2. Llamada al MS-Limpieza a través del cliente Feign
+        // Guardamos la respuesta que contiene el id de limpieza y el estado
+        ReservaLimpiezaDTO responseMS = limpiezaClient.agendarLimpieza(request);
+
+        // 3. Creamos el DTO de retorno que tus métodos esperan
+        // Mapeamos los datos de la reserva local + los datos que vienen del microservicio
+        ReservaFiltrosDTO dtoFinal = new ReservaFiltrosDTO();
+
+        // Datos de tu entidad local
+        dtoFinal.setIdReserva(reserva.getIdReserva());
+        dtoFinal.setEstadoReserva(reserva.getEstadoReserva());
+        dtoFinal.setMontoTotal(reserva.getMontoTotal());
+        dtoFinal.setFechaInicio(reserva.getFechaInicio());
+        dtoFinal.setFechaFin(reserva.getFechaFin());
+        dtoFinal.setIdPropiedad(reserva.getIdPropiedad());
+
+        // Datos que vienen de la respuesta del MS-Limpieza
+        dtoFinal.setIdLimpieza(responseMS.getIdLimpieza());
+        dtoFinal.setFechaProgramada(responseMS.getFechaProgramada());
+
+        // Convertimos el Enum del MS-Limpieza a String para tu ReservaFiltrosDTO
+        if (responseMS.getEstadoLimpieza() != null) {
+            dtoFinal.setEstadoLimpieza(String.valueOf(responseMS.getEstadoLimpieza()));
+        }
+
+        return dtoFinal;
     }
 
 }

@@ -27,7 +27,7 @@ public class Reserva {
     private Long idInquilino;
 
     @Enumerated(EnumType.STRING)
-    private EstadoReserva estado;
+    private EstadoReserva estadoReserva;
 
     @Column(nullable = false)
     private LocalDateTime fechaReserva;
