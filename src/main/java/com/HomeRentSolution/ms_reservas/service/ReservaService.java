@@ -1,9 +1,6 @@
 package com.HomeRentSolution.ms_reservas.service;
 
-import com.HomeRentSolution.ms_reservas.client.InquilinoClient;
-import com.HomeRentSolution.ms_reservas.client.PagosClient;
-import com.HomeRentSolution.ms_reservas.client.PropiedadesClient;
-import com.HomeRentSolution.ms_reservas.client.PrecioClient;
+import com.HomeRentSolution.ms_reservas.client.*;
 import com.HomeRentSolution.ms_reservas.dto.ReservaPrecioDTO;
 import com.HomeRentSolution.ms_reservas.dto.ReservaPagosDTO;
 import com.HomeRentSolution.ms_reservas.dto.*;
@@ -14,6 +11,7 @@ import com.HomeRentSolution.ms_reservas.model.EstadoReserva;
 import com.HomeRentSolution.ms_reservas.model.Reserva;
 import com.HomeRentSolution.ms_reservas.repository.ReservaRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -27,6 +25,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ReservaService {
@@ -36,6 +35,7 @@ public class ReservaService {
     private final PrecioClient precioClient;
     private final InquilinoClient inquilinosClient;
     private final PagosClient pagosClient;
+    private final MensajeriaClient mensajeriaClient;
 
     private List<ReservaFiltrosDTO> buscarConFiltro(ReservaFiltrosDTO filtrosDTO) {
 
@@ -270,14 +270,193 @@ public class ReservaService {
         propiedadClient.cambiarEstado(reserva.getIdPropiedad());
     }
 
-    //buscarDisponibilidad() *
-    //crearReserva *
-    //private boolean validarDisponibilidad()*
-    //private obtenerPrecios()*
-    //private void generarPago()*
-    //public void cancelarReserva()
-    //public void confirmarReserva()
-    //public obtenerReservasCliente()
-    //private void enviarConfirmacion()
+    public ReservaDTO confirmarReserva(Long idReserva) {
+
+        // 1. Buscar la reserva
+        Reserva reserva = reservaRepository.findById(idReserva)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Reserva no encontrada con ID: " + idReserva
+                ));
+
+        // 2. Validar que esté en estado PENDIENTE
+        if (reserva.getEstado() != EstadoReserva.PENDIENTE) {
+            throw new RuntimeException(
+                    "La reserva no puede confirmarse porque está en estado: " + reserva.getEstado()
+            );
+        }
+
+        // 3. Validar que no haya vencido el plazo de pago
+        if (LocalDateTime.now().isAfter(reserva.getFechaLimitesPago())) {
+            reserva.setEstado(EstadoReserva.CANCELADA);
+            reservaRepository.save(reserva);
+            throw new RuntimeException(
+                    "La reserva venció su fecha límite de pago y fue cancelada automáticamente."
+            );
+        }
+
+        // 4. Confirmar el pago en MS-Pagos
+        pagosClient.confirmarPago(idReserva);
+
+        // 5. Cambiar estado a CONFIRMADA
+        reserva.setEstado(EstadoReserva.COMPLETADA);
+        reservaRepository.save(reserva);
+
+        // 6. Actualizar disponibilidad en MS-Propiedades
+        propiedadClient.cambiarEstado(reserva.getIdPropiedad());
+
+        // 7. Retorno manual (mismo patrón que crearReserva)
+        ReservaDTO response = new ReservaDTO();
+        response.setIdReserva(reserva.getIdReserva());
+        response.setIdPropiedad(reserva.getIdPropiedad());
+        response.setIdInquilino(reserva.getIdInquilino());
+        response.setEstado(reserva.getEstado());
+        response.setFechaReserva(reserva.getFechaReserva());
+        response.setFechaInicio(reserva.getFechaInicio());
+        response.setFechaFin(reserva.getFechaFin());
+        response.setFechaLimitesPago(reserva.getFechaLimitesPago());
+        response.setMontoTotal(reserva.getMontoTotal());
+
+        return response;
+    }
+
+    public List<ReservaFiltrosDTO> obtenerReservasCliente(Long idInquilino,
+                                                          LocalDate fechaInicio,
+                                                          LocalDate fechaFin) {
+
+        // 1. Validar que el inquilino existe
+        ReservaInquilinoDTO inquilino = inquilinosClient.obtenerInquilinoPorId(idInquilino);
+        if (inquilino == null) {
+            throw new RecursoNoEncontradoException(
+                    "Inquilino no encontrado con ID: " + idInquilino
+            );
+        }
+
+        // 2. Obtener todas las reservas del inquilino
+        List<Reserva> reservas = reservaRepository.findByIdInquilino(idInquilino);
+
+        // 3. Filtrar por rango de fechas si se proporcionan
+        if (fechaInicio != null && fechaFin != null) {
+            LocalDateTime inicio = fechaInicio.atStartOfDay();
+            LocalDateTime fin = fechaFin.atStartOfDay();
+            reservas = reservas.stream()
+                    .filter(r -> estaEnRango(r, inicio, fin))
+                    .collect(Collectors.toList());
+        }
+
+        // 4. Enriquecer cada reserva con propiedad, precio e inquilino
+        return reservas.stream()
+                .map(reserva -> enriquecerReserva(reserva, inquilino))
+                .collect(Collectors.toList());
+    }
+
+    private ReservaFiltrosDTO enriquecerReserva(Reserva reserva, ReservaInquilinoDTO inquilino) {
+
+        ReservaFiltrosDTO dto = new ReservaFiltrosDTO();
+
+        // Datos base de la reserva
+        dto.setIdReserva(reserva.getIdReserva());
+        dto.setEstado(reserva.getEstado());
+        dto.setFechaReserva(reserva.getFechaReserva());
+        dto.setFechaInicio(reserva.getFechaInicio());
+        dto.setFechaFin(reserva.getFechaFin());
+        dto.setFechaLimitesPago(reserva.getFechaLimitesPago());
+        dto.setMontoTotal(reserva.getMontoTotal());
+
+        // Datos del inquilino (una sola llamada reutilizada)
+        dto.setIdInquilino(inquilino.getIdInquilino());
+        dto.setNombre(inquilino.getNombre());
+        dto.setEmail(inquilino.getEmail());
+
+        // Datos de la propiedad
+        try {
+            ReservaPropiedadDTO propiedad = propiedadClient.obtenerPropiedadPorId(
+                    reserva.getIdPropiedad()
+            );
+            if (propiedad != null) {
+                dto.setIdPropiedad(propiedad.getIdPropiedad().longValue());
+                dto.setUbicacion(propiedad.getUbicacion());
+                dto.setEstadoPropiedad(propiedad.getEstadoPropiedad());
+                dto.setPrecioBase(propiedad.getPrecio());
+            }
+        } catch (Exception e) {
+            // Si MS-Propiedades falla, se muestra sin datos de propiedad
+        }
+
+        // Datos del precio/temporada
+        try {
+            ReservaPrecioDTO precio = precioClient.obtenerPrecioPorPropiedad(
+                    reserva.getIdPropiedad()
+            );
+            if (precio != null) {
+                dto.setTemporada(precio.getTemporada());
+                dto.setMultiplicador(precio.getMultiplicador());
+            }
+        } catch (Exception e) {
+            // Si MS-Precios falla, se muestra sin datos de precio
+        }
+
+        return dto;
+    }
+
+    private void enviarConfirmacion(Reserva reserva) {
+
+        // 1. Obtener datos del inquilino
+        ReservaInquilinoDTO inquilino = inquilinosClient.obtenerInquilinoPorId(
+                reserva.getIdInquilino()
+        );
+
+        if (inquilino == null) {
+            throw new RecursoNoEncontradoException(
+                    "Inquilino no encontrado con ID: " + reserva.getIdInquilino()
+            );
+        }
+
+        // 2. Construir el contenido del mensaje
+        String contenido = String.format(
+                "Estimado/a %s, su reserva #%d ha sido confirmada. " +
+                        "Fecha inicio: %s | Fecha fin: %s | Monto total: $%.2f. " +
+                        "Gracias por confiar en HomeRentSolution.",
+                inquilino.getNombre(),
+                reserva.getIdReserva(),
+                reserva.getFechaInicio().toLocalDate(),
+                reserva.getFechaFin().toLocalDate(),
+                reserva.getMontoTotal()
+        );
+
+        // 3. Armar el DTO con la estructura de MS-Mensajería
+        ReservaMensajeriaDTO mensajeDTO = new ReservaMensajeriaDTO();
+        mensajeDTO.setFecha(LocalDateTime.now());
+        mensajeDTO.setContenido(contenido);
+        mensajeDTO.setIdEmisor(reserva.getIdReserva());    // quien origina
+        mensajeDTO.setIdReceptor(reserva.getIdInquilino()); // quien recibe
+
+        // 4. Enviar a MS-Mensajería y registrar en ReservaFiltrosDTO
+        try {
+            ReservaMensajeriaDTO respuesta = mensajeriaClient.enviarEmail(mensajeDTO);
+
+            // 5. Registrar la respuesta en ReservaFiltrosDTO
+            ReservaFiltrosDTO registro = new ReservaFiltrosDTO();
+            registro.setIdMensaje(respuesta.getIdMensaje());   // ID generado por MS-Mensajería
+            registro.setFecha(respuesta.getFecha());
+            registro.setContenido(respuesta.getContenido());
+            registro.setIdEmisor(respuesta.getIdEmisor());
+            registro.setIdReceptor(respuesta.getIdReceptor());
+            registro.setMontoTotal(reserva.getMontoTotal());
+            registro.setFechaInicio(reserva.getFechaInicio());
+            registro.setFechaFin(reserva.getFechaFin());
+
+            log.info("[MS-Reservas] Confirmación enviada. idMensaje={} | idReceptor={} | fecha={}",
+                    respuesta.getIdMensaje(),
+                    respuesta.getIdReceptor(),
+                    respuesta.getFecha()
+            );
+
+        } catch (Exception e) {
+            // No interrumpe el flujo si MS-Mensajería falla
+            log.error("[MS-Reservas] Error al enviar confirmación al inquilino ID: {}. Error: {}",
+                    reserva.getIdInquilino(), e.getMessage());
+        }
+    }
+
 }
 

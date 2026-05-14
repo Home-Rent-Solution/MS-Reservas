@@ -17,4 +17,6 @@ public interface PagosClient {
 
     @PutMapping("/api/pagos/cancelar/{idReserva}")
     void cancelarPago(@PathVariable Long idReserva, @RequestParam String motivo, BigDecimal montoReembolso);
+
+    void confirmarPago(Long idReserva);
 }

@@ -1,5 +1,6 @@
 package com.HomeRentSolution.ms_reservas.client;
 
+import com.HomeRentSolution.ms_reservas.dto.ReservaInquilinoDTO;
 import com.HomeRentSolution.ms_reservas.dto.ReservaPropiedadDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -12,5 +13,7 @@ public interface InquilinoClient {
 
     @GetMapping("/inquilino/{id}")
     Object getInquilinoPorId(@PathVariable Long idInquilino);
+
+    ReservaInquilinoDTO obtenerInquilinoPorId(Long idInquilino);
 
 }

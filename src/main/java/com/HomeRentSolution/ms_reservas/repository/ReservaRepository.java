@@ -21,10 +21,11 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 
         List<Reserva> findByBuscarPorId(Long idReserva);
         List<Reserva> findByobtenerTodasLasReservas();
-        List<Reserva> findByBuscarPorIdInquilino(Long idInquilino);
+        List<Reserva> findByIdInquilino(Long idInquilino);
         List<Reserva> findByEstado(EstadoReserva estado);
         List<Reserva> findByEstado(EstadoPropiedad estadoPropiedad);
         List<Reserva> findByEstadoAndFechaLimitePagoBefore(EstadoReserva estado, LocalDateTime fecha);
+
 
         @Query("SELECT COUNT(r) > 0 FROM Reserva r WHERE r.idPropiedad = :idPropiedad " +
                 "AND r.estado != 'CANCELADA' " +
