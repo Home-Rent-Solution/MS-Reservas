@@ -1,6 +1,7 @@
 package com.HomeRentSolution.ms_reservas.dto;
 
 import com.HomeRentSolution.ms_reservas.model.EstadoPropiedad;
+import com.HomeRentSolution.ms_reservas.model.EstadoReserva;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -15,6 +16,8 @@ public class ReservaFiltrosDTO {
     private String ubicacion;
 
     private EstadoPropiedad estadoPropiedad;
+
+    private EstadoReserva estadoReserva;
 
     private BigDecimal precioMin;
 

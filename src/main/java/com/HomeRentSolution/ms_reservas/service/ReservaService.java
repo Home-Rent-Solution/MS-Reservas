@@ -8,6 +8,7 @@ import com.HomeRentSolution.ms_reservas.dto.ReservaInquilinoDTO;
 import com.HomeRentSolution.ms_reservas.dto.ReservaPrecioDTO;
 import com.HomeRentSolution.ms_reservas.dto.ReservaPropiedadDTO;
 import com.HomeRentSolution.ms_reservas.model.EstadoPropiedad;
+import com.HomeRentSolution.ms_reservas.model.EstadoReserva;
 import com.HomeRentSolution.ms_reservas.model.Reserva;
 import com.HomeRentSolution.ms_reservas.repository.ReservaRepository;
 import lombok.RequiredArgsConstructor;
@@ -61,18 +62,15 @@ public class ReservaService {
         return cumpleMin && cumpleMax;
     }
 
-    private boolean estaDisponible(ReservaPropiedadDTO p, List<Reserva> todasLasReservas, LocalDateTime inicioBusqueda, LocalDateTime finBusqueda) {
+    private boolean cumpleDisponibilidad(Reserva p, LocalDateTime inicio, LocalDateTime fin, EstadoReserva estadoReserva) {
 
-        if (inicioBusqueda == null || finBusqueda == null) return true;
+        if (inicio == null || fin == null) return true;
+        if (estadoReserva == null || estadoReserva == "CANCELADA") return true;
 
-        boolean ocupada = reservaRepository.existsByPropiedadIdAndFechaInicioBeforeAndFechaFinAfter(
-                p.getId(),
-                finBusqueda,
-                inicioBusqueda
-        );
 
-        return !tieneChoque;
+        return;
     }
+
 
     public ReservaInquilinoDTO crearReserva(ReservaInquilinoDTO nuevaReserva){
         ReservaPropiedadDTO propiedadPorId = propiedadClient.obtenerPropiedadPorId(nuevaReserva.getIdInquilino());

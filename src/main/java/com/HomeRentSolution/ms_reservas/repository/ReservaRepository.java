@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -17,6 +18,9 @@ import java.util.List;
 public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 
 
+
+        List<Reserva> findByBuscarPorId(Long idReserva);
+        List<Reserva> findByobtenerTodasLasReservas();
         List<Reserva> findByBuscarPorIdInquilino(Long idInquilino);
         List<Reserva> findByEstado(EstadoReserva estado);
         List<Reserva> findByEstado(EstadoPropiedad estadoPropiedad);
