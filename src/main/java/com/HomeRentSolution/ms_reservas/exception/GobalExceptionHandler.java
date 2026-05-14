@@ -21,6 +21,22 @@ public class GobalExceptionHandler {
                 .forEach(e -> errores.put(e.getField(), e.getDefaultMessage()));
         return ResponseEntity.badRequest().body(errores);
     }
+
+    @ExceptionHandler(PropiedadNoDisponibleException.class)
+    public ResponseEntity<Map<String, String>> handlePropiedadNoDisponible(PropiedadNoDisponibleException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(RecursoNoEncontradoException.class)
+    public ResponseEntity<Map<String, String>> handleRecursoNoEncontrado(RecursoNoEncontradoException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    // Siempre al final, captura lo que no fue manejado arriba
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntime(RuntimeException ex) {
         Map<String, String> error = new HashMap<>();

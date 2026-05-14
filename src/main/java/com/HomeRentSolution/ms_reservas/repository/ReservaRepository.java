@@ -30,7 +30,7 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
                 "AND r.estado != 'CANCELADA' " +
                 "AND r.fechaInicio < :fin AND r.fechaFin > :inicio")
         boolean existeReservaEnRango(
-                @Param("idPropiedad") Integer idPropiedad,
+                @Param("idPropiedad") Long idPropiedad,
                 @Param("inicio") LocalDate inicio,
                 @Param("fin") LocalDate fin
         );

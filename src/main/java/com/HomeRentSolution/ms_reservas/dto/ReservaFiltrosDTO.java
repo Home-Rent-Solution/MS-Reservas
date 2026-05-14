@@ -31,4 +31,8 @@ public class ReservaFiltrosDTO {
 
     private LocalDateTime fechaLimitePago;
 
+    private String temporada;
+
+    private Double multiplicador;
+
 }

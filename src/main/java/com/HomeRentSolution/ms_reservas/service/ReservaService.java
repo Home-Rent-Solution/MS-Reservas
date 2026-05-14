@@ -3,7 +3,11 @@ package com.HomeRentSolution.ms_reservas.service;
 import com.HomeRentSolution.ms_reservas.client.InquilinoClient;
 import com.HomeRentSolution.ms_reservas.client.PagosClient;
 import com.HomeRentSolution.ms_reservas.client.PropiedadesClient;
+import com.HomeRentSolution.ms_reservas.client.PrecioClient;
+import com.HomeRentSolution.ms_reservas.dto.ReservaPrecioDTO;
 import com.HomeRentSolution.ms_reservas.dto.*;
+import com.HomeRentSolution.ms_reservas.exception.PropiedadNoDisponibleException;
+import com.HomeRentSolution.ms_reservas.exception.RecursoNoEncontradoException;
 import com.HomeRentSolution.ms_reservas.model.EstadoPropiedad;
 import com.HomeRentSolution.ms_reservas.model.EstadoReserva;
 import com.HomeRentSolution.ms_reservas.model.Reserva;
@@ -27,10 +31,11 @@ public class ReservaService {
 
     private final PropiedadesClient propiedadClient;
     private final ReservaRepository reservaRepository;
+    private final PrecioClient precioClient;
     private final InquilinoClient inquilinosClient;
     private final PagosClient pagosClient;
 
-    private List<ReservaPropiedadDTO> buscarConFiltro(ReservaFiltrosDTO filtrosDTO) {
+    private List<ReservaFiltrosDTO> buscarConFiltro(ReservaFiltrosDTO filtrosDTO) {
 
         List<ReservaPropiedadDTO> todasPropiedades = propiedadClient.obtenerTodas();
 
@@ -38,11 +43,14 @@ public class ReservaService {
         List<Reserva> reservas = reservaRepository.findAll();
         completarDisponibilidad(reservas, todasPropiedades, filtrosDTO.getFechaInicio(), filtrosDTO.getFechaFin());
 
-        return todasPropiedades.stream()
-                .filter(p -> cumpleEstado(p, filtrosDTO.getEstadoPropiedad()))
+        List<ReservaPropiedadDTO> propiedadesDisponibles = todasPropiedades.stream()
+                .filter(p -> Boolean.TRUE.equals(p.isDisponible()))
                 .filter(p -> cumpleUbicacion(p, filtrosDTO.getUbicacion()))
                 .filter(p -> cumpleRangoPrecio(p, filtrosDTO.getPrecioMin(), filtrosDTO.getPrecioMax()))
                 .collect(Collectors.toList());
+
+        // Asocia precios a las propiedades disponibles
+        return obtenerPrecios(propiedadesDisponibles);
 
     }
 
@@ -92,23 +100,54 @@ public class ReservaService {
     }
 
 
-    public ReservaDTO validarDisponibilidad(dto.getIdPropiedad());
+    private boolean validarDisponibilidad(Long idPropiedad){
 
-    // Si pasa la validación, procede a guardar
-    Reserva reserva = reservaMapper.toEntity(dto);
-    reservaRepository.save(reserva);
+        ReservaPropiedadDTO propiedad = propiedadClient.obtenerPropiedadPorId(idPropiedad);
 
-    return reservaMapper.toDTO(reserva);
+            if (propiedad == null) {
+                throw new RecursoNoEncontradoException("La propiedad no fue encontrada.");
+            }
 
-    private boolean validarDisponibilidad(PropiedadesClient propiedadDisponible){
+            if (!Boolean.TRUE.equals(propiedad.isDisponible())) {
+                throw new PropiedadNoDisponibleException(
+                        "La propiedad con ID " + idPropiedad + " ya no está disponible."
+                );
+            }
 
+            return true;
+    }
+
+    private List<ReservaFiltrosDTO> obtenerPrecios(List<ReservaPropiedadDTO> propiedadesDisponibles) {
+
+        return propiedadesDisponibles.stream()
+                .map(propiedad -> {
+                    ReservaFiltrosDTO dto = new ReservaFiltrosDTO();
+                    dto.setIdPropiedad(propiedad.getIdPropiedad().longValue());
+                    dto.setUbicacion(propiedad.getUbicacion());
+                    dto.setEstadoPropiedad(propiedad.getEstadoPropiedad());
+
+                    try {
+                        ReservaPrecioDTO precio = precioClient.obtenerPrecioPorPropiedad(
+                                propiedad.getIdPropiedad().longValue()
+                        );
+                        if (precio != null) {
+                            dto.setTemporada(precio.getTemporada());
+                            dto.setMultiplicador(precio.getMultiplicador());
+                        }
+                    } catch (Exception e) {
+                        // Si precios falla, la propiedad se muestra sin precio
+                    }
+
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 
 
     //buscarDisponibilidad() *
     //crearReserva *
     //private boolean validarDisponibilidad()*
-    //private obtenerPrecios()
+    //private obtenerPrecios()*
     //private void generarPago()
     //public void cancelarReserva()
     //public void confirmarReserva()
