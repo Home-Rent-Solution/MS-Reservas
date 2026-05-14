@@ -44,4 +44,10 @@ public class Reserva {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal montoTotal;
 
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal montoAnticipo;
+
+    @Column(nullable = false)
+    private Integer numeroCuotas;
+
 }

@@ -200,28 +200,81 @@ public class ReservaService {
         );
 
         // 4. Calcular monto total
-        BigDecimal montoCalculado = propiedad.getPrecio()
+        BigDecimal montoTotal = propiedad.getPrecio()
                 .multiply(BigDecimal.valueOf(precio.getMultiplicador()))
                 .multiply(BigDecimal.valueOf(numeroDias));
 
-        // 5.
+        // 5. Calcular anticipo (50% del total para reservar)
+        BigDecimal montoAnticipo = montoTotal.multiply(new BigDecimal("0.5"));
+
+        // 6. Actualizar montoTotal en la reserva
+        reserva.setMontoTotal(montoTotal);
+        reservaRepository.save(reserva);
+
+        // 7. Enviar a MS-Pagos
         ReservaPagosDTO pagoDTO = new ReservaPagosDTO();
         pagoDTO.setIdReserva(reserva.getIdReserva());
         pagoDTO.setIdInquilino(reserva.getIdInquilino());
         pagoDTO.setIdPropiedad(reserva.getIdPropiedad());
-        pagoDTO.setMontoTotal(montoCalculado);
+        pagoDTO.setMontoTotal(montoTotal);           // monto total de la estadía
+        pagoDTO.setMontoAnticipo(montoAnticipo);      // 50% que se paga para reservar
         pagoDTO.setFechaVencimiento(reserva.getFechaLimitesPago());
         pagoDTO.setNumeroCuotas(1);
 
         pagosClient.crearPago(pagoDTO);
     }
+    public void cancelarReserva(Long idReserva, String motivo, BigDecimal montoReembolso) {
 
+        // 1. Buscar la reserva
+        Reserva reserva = reservaRepository.findById(idReserva)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Reserva no encontrada con ID: " + idReserva
+                ));
+
+        // 2. Validar que no esté ya cancelada o finalizada
+        if (reserva.getEstado() == EstadoReserva.CANCELADA ||
+                reserva.getEstado() == EstadoReserva.FINALIZADA) {
+            throw new RuntimeException(
+                    "La reserva no puede cancelarse porque está en estado: " + reserva.getEstado()
+            );
+        }
+
+        // 3. Calcular horas restantes antes de fechaInicio
+        long horasRestantes = ChronoUnit.HOURS.between(
+                LocalDateTime.now(),
+                reserva.getFechaInicio()
+        );
+
+        // 4. Determinar porcentaje de reembolso
+        BigDecimal porcentajeReembolso;
+
+        if (horasRestantes > 72) {
+            porcentajeReembolso = BigDecimal.ONE;           // 100%
+        } else if (horasRestantes > 24) {
+            porcentajeReembolso = new BigDecimal("0.5");    // 50%
+        } else {
+            porcentajeReembolso = BigDecimal.ZERO;          // 0%
+        }
+
+        BigDecimal monto = reserva.getMontoTotal()
+                .multiply(porcentajeReembolso);
+
+        // 5. Cambiar estado a CANCELADA
+        reserva.setEstado(EstadoReserva.CANCELADA);
+        reservaRepository.save(reserva);
+
+        // 6. Notificar a MS-Pagos con el monto a reembolsar
+        pagosClient.cancelarPago(idReserva, motivo, montoReembolso);
+
+        // 7. Liberar disponibilidad en MS-Propiedades
+        propiedadClient.cambiarEstado(reserva.getIdPropiedad());
+    }
 
     //buscarDisponibilidad() *
     //crearReserva *
     //private boolean validarDisponibilidad()*
     //private obtenerPrecios()*
-    //private void generarPago()
+    //private void generarPago()*
     //public void cancelarReserva()
     //public void confirmarReserva()
     //public obtenerReservasCliente()

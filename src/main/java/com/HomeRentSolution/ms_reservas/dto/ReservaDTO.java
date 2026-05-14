@@ -29,4 +29,8 @@ public class ReservaDTO {
     private LocalDateTime fechaLimitesPago;
 
     private BigDecimal montoTotal;
+
+    private BigDecimal montoAnticipo;
+
+    private Integer numeroCuotas;
 }

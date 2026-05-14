@@ -14,5 +14,6 @@ public class ReservaPagosDTO {
     private Long idPropiedad;
     private BigDecimal montoTotal;
     private Integer numeroCuotas;
+    private BigDecimal montoAnticipo;
     private LocalDateTime fechaVencimiento;
 }
