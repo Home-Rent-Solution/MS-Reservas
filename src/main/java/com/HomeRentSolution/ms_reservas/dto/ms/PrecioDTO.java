@@ -3,7 +3,7 @@ package com.HomeRentSolution.ms_reservas.dto.ms;
 import lombok.Data;
 
 @Data
-public class ReservaPrecioDTO {
+public class PrecioDTO {
 
     private Long idPrecios;
 

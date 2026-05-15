@@ -1,6 +1,6 @@
 package com.HomeRentSolution.ms_reservas.client;
 
-import com.HomeRentSolution.ms_reservas.dto.ms.ReservaMensajeriaDTO;
+import com.HomeRentSolution.ms_reservas.dto.ms.MensajeriaDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,5 +14,5 @@ public interface MensajeriaClient {
     Object getMensajeriaPorId(@PathVariable("id") Long idMensaje);
 
     @PostMapping("/api/mensajeria/email")
-    ReservaMensajeriaDTO enviarEmail(@RequestBody ReservaMensajeriaDTO dto);
+    MensajeriaDTO enviarEmail(@RequestBody MensajeriaDTO dto);
 }

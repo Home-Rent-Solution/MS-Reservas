@@ -1,6 +1,6 @@
 package com.HomeRentSolution.ms_reservas.client;
 
-import com.HomeRentSolution.ms_reservas.dto.ms.ReservaPrecioDTO;
+import com.HomeRentSolution.ms_reservas.dto.ms.PrecioDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -12,5 +12,5 @@ public interface PrecioClient {
     Boolean getPrecioPorId(@PathVariable ("id")Long idPrecios);
 
     @GetMapping("/api/precio/propiedad/{idPropiedad}")
-    ReservaPrecioDTO obtenerPrecioPorPropiedad(@PathVariable Long idPropiedad);
+    PrecioDTO obtenerPrecioPorPropiedad(@PathVariable Long idPropiedad);
 }

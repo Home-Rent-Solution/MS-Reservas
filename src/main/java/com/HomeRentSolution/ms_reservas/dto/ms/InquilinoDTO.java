@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
-public class ReservaInquilinoDTO {
+public class InquilinoDTO {
 
     private Long idInquilino;
 

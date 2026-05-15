@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 
 
 @Data
-public class ReservaPropiedadDTO {
+public class PropiedadDTO {
 
     private Long idPropiedad;
 

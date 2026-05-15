@@ -5,7 +5,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class ReservaLimpiezaDTO {
+public class LimpiezaDTO {
 
     private Long idLimpieza;
     private Long idPropiedad;

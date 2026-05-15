@@ -1,5 +1,6 @@
 package com.HomeRentSolution.ms_reservas.dto.response;
 
+import com.HomeRentSolution.ms_reservas.model.EstadoReserva;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -10,26 +11,12 @@ import java.time.LocalDateTime;
 public class ReservaResponse {
 
     private Long idReserva;
-
     private Long idPropiedad;
-
     private Long idInquilino;
-
-    private String nombreInquilino;
-
-    private String tituloPropiedad;
-
-    private String ubicacion;
-
-    private LocalDate fechaInicio;
-
-    private LocalDate fechaFin;
-
-    private BigDecimal montoTotal;
-
-    private String estado;
-
+    private EstadoReserva estado;
     private LocalDateTime fechaReserva;
-
-    private LocalDateTime fechaLimitePago;
+    private LocalDateTime fechaInicio;
+    private LocalDateTime fechaFin;
+    private LocalDateTime fechaLimitesPago;
+    private BigDecimal montoTotal;
 }

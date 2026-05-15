@@ -1,6 +1,6 @@
 package com.HomeRentSolution.ms_reservas.client;
 
-import com.HomeRentSolution.ms_reservas.dto.ms.ReservaPagosDTO;
+import com.HomeRentSolution.ms_reservas.dto.ms.PagosDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,7 +13,7 @@ public interface PagosClient {
     Boolean getPagoPorId(@PathVariable ("id") Long idPago);
 
     @PostMapping("/api/pagos/crear")
-    void crearPago(@RequestBody ReservaPagosDTO pagoRequest);
+    void crearPago(@RequestBody PagosDTO pagoRequest);
 
     @PutMapping("/api/pagos/cancelar/{id}")
     void cancelarPago(@PathVariable ("id")Long idReserva, @RequestParam String motivo, BigDecimal montoReembolso);
