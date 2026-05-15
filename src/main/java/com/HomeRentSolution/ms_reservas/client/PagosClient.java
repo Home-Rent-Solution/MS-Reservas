@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 
-@FeignClient(name = "ms-pagos", url = "${ms-pagos.url}")
+@FeignClient(name = "ms-pagos", url = "${ms.pagos.url}")
 public interface PagosClient {
 
     @GetMapping("/api/pagos/{id}")

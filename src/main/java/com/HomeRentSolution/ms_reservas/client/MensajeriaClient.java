@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "ms-mensajeria", url = "${ms-mensajeria.url}")
+@FeignClient(name = "ms-mensajeria", url = "${ms.mensajeria.url}")
 public interface MensajeriaClient {
 
     @GetMapping("/mensajeria/{id}")

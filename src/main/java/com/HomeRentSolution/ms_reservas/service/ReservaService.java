@@ -136,7 +136,7 @@ public class ReservaService {
 
         pagosClient.confirmarPago(idReserva);
 
-        reserva.setEstadoReserva(EstadoReserva.COMFIRMADA); // corregido: era COMPLETADA
+        reserva.setEstadoReserva(EstadoReserva.CONFIRMADA); // corregido: era COMPLETADA
         reservaRepository.save(reserva);
 
         propiedadClient.cambiarEstado(reserva.getIdPropiedad());
@@ -183,7 +183,7 @@ public class ReservaService {
 
         Reserva reserva = buscarReservaOException(idReserva);
 
-        if (reserva.getEstadoReserva() != EstadoReserva.COMFIRMADA) {
+        if (reserva.getEstadoReserva() != EstadoReserva.CONFIRMADA) {
             throw new RuntimeException(
                     "La reserva no puede finalizarse porque está en estado: " + reserva.getEstadoReserva()
             );

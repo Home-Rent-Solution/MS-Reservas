@@ -4,7 +4,7 @@ import com.HomeRentSolution.ms_reservas.dto.ms.LimpiezaDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
-@FeignClient(name = "ms-limpieza", url = "${ms-inquilinos.url}")
+@FeignClient(name = "ms-limpieza", url = "${ms.inquilinos.url}")
 public interface LimpiezaClient {
 
     @GetMapping("/limpieza/{id}")
