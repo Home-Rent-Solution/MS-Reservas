@@ -1,9 +1,10 @@
 package com.HomeRentSolution.ms_reservas.service;
 
 import com.HomeRentSolution.ms_reservas.client.*;
-import com.HomeRentSolution.ms_reservas.dto.ReservaPrecioDTO;
-import com.HomeRentSolution.ms_reservas.dto.ReservaPagosDTO;
-import com.HomeRentSolution.ms_reservas.dto.*;
+import com.HomeRentSolution.ms_reservas.dto.ms.*;
+import com.HomeRentSolution.ms_reservas.dto.request.ReservaFiltrosDTO;
+import com.HomeRentSolution.ms_reservas.dto.response.ReservaResponse;
+import com.HomeRentSolution.ms_reservas.dto.response.ReservaDetalleResponse;
 import com.HomeRentSolution.ms_reservas.exception.PropiedadNoDisponibleException;
 import com.HomeRentSolution.ms_reservas.exception.RecursoNoEncontradoException;
 import com.HomeRentSolution.ms_reservas.model.EstadoPropiedad;
@@ -14,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestParam;
 
 
 import java.math.BigDecimal;
@@ -59,7 +59,7 @@ public class ReservaService {
 
     }
 
-    public ReservaDTO crearReserva(ReservaAdmDTO dto) {
+    public ReservaDetalleResponse crearReserva(ReservaResponse dto) {
 
         // 1. Validar disponibilidad
         validarDisponibilidad(dto.getIdPropiedad());
@@ -81,7 +81,7 @@ public class ReservaService {
         generarPago(reserva);
 
         // 4. Retorno manual
-        ReservaDTO response = new ReservaDTO();
+        ReservaDetalleResponse response = new ReservaDetalleResponse();
         response.setIdReserva(reserva.getIdReserva());
         response.setIdPropiedad(reserva.getIdPropiedad());
         response.setIdInquilino(reserva.getIdInquilino());
@@ -274,7 +274,7 @@ public class ReservaService {
         agendarLimpieza(reserva, LocalDateTime.now());
     }
 
-    public ReservaDTO confirmarReserva(Long idReserva) {
+    public ReservaDetalleResponse confirmarReserva(Long idReserva) {
 
         // 1. Buscar la reserva
         Reserva reserva = reservaRepository.findById(idReserva)
@@ -309,7 +309,7 @@ public class ReservaService {
         propiedadClient.cambiarEstado(reserva.getIdPropiedad());
 
         // 7. Retorno manual (mismo patrón que crearReserva)
-        ReservaDTO response = new ReservaDTO();
+        ReservaDetalleResponse response = new ReservaDetalleResponse();
         response.setIdReserva(reserva.getIdReserva());
         response.setIdPropiedad(reserva.getIdPropiedad());
         response.setIdInquilino(reserva.getIdInquilino());

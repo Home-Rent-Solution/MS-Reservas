@@ -1,7 +1,7 @@
 package com.HomeRentSolution.ms_reservas.controller;
 
-import com.HomeRentSolution.ms_reservas.dto.ReservaAdmDTO;
-import com.HomeRentSolution.ms_reservas.dto.ReservaInquilinoDTO;
+import com.HomeRentSolution.ms_reservas.dto.response.ReservaResponse;
+import com.HomeRentSolution.ms_reservas.dto.ms.ReservaInquilinoDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,7 +34,7 @@ public class ReservaController {
     @GetMapping("/{id}/admin")
     public ResponseEntity<?> getParaAdmin(@PathVariable Long id) {
         try {
-            ReservaAdmDTO dto = reservasService.obtenerParaAdmin(id);
+            ReservaResponse dto = reservasService.obtenerParaAdmin(id);
             return ResponseEntity.ok(dto);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());

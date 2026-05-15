@@ -1,11 +1,7 @@
 package com.HomeRentSolution.ms_reservas.client;
 
-import com.HomeRentSolution.ms_reservas.dto.ReservaPropiedadDTO;
-import com.HomeRentSolution.ms_reservas.model.EstadoReserva;
-import com.HomeRentSolution.ms_reservas.model.Reserva;
-import feign.Param;
+import com.HomeRentSolution.ms_reservas.dto.ms.ReservaPropiedadDTO;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -14,8 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.math.BigDecimal;
 import java.util.List;
 
-@FeignClient(name = "ms-propiedades",
-url = "${ms.propiedades.url}")
+@FeignClient(name = "ms-propiedades", url = "${ms.propiedades.url}")
 public interface PropiedadesClient {
 
     @GetMapping("/api/v1/propiedades/{id}")

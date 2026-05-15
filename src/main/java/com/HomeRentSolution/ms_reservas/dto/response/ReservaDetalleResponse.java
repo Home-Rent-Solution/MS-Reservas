@@ -1,16 +1,13 @@
-package com.HomeRentSolution.ms_reservas.dto;
+package com.HomeRentSolution.ms_reservas.dto.response;
 
 import com.HomeRentSolution.ms_reservas.model.EstadoReserva;
-import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
-public class ReservaDTO {
+public class ReservaDetalleResponse {
 
     private Long idReserva;
 

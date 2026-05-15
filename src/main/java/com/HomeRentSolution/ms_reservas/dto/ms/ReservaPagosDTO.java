@@ -1,4 +1,4 @@
-package com.HomeRentSolution.ms_reservas.dto;
+package com.HomeRentSolution.ms_reservas.dto.ms;
 
 import lombok.Data;
 
@@ -13,7 +13,10 @@ public class ReservaPagosDTO {
     private Long idInquilino;
     private Long idPropiedad;
     private BigDecimal montoTotal;
+    private BigDecimal montoPagado;
     private Integer numeroCuotas;
     private BigDecimal montoAnticipo;
+    private LocalDateTime fechaPago;
     private LocalDateTime fechaVencimiento;
+    private String estaPago;
 }

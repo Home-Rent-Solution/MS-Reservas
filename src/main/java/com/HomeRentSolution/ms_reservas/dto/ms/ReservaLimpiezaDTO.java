@@ -1,4 +1,4 @@
-package com.HomeRentSolution.ms_reservas.dto;
+package com.HomeRentSolution.ms_reservas.dto.ms;
 
 import lombok.Data;
 

@@ -1,10 +1,7 @@
-package com.HomeRentSolution.ms_reservas.dto;
+package com.HomeRentSolution.ms_reservas.dto.ms;
 
 import lombok.Data;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
