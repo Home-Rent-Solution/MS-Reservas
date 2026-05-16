@@ -47,6 +47,8 @@ public class ReservaController {
 
     }
 
+
+
     // ─── GET /{id}/cliente → vista del inquilino (simple) ────────────────────
     @GetMapping("/{id}/cliente")
     public ResponseEntity<?> getParaCliente(@PathVariable Long id) {
