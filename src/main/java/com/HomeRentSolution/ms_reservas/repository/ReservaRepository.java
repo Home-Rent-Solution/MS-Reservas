@@ -11,16 +11,17 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 
 
-
-        List<Reserva> findByBuscarPorId(Long idReserva);
+        @Override
+        Optional<Reserva> findById(Long idReserva);
         List<Reserva> findByobtenerTodasLasReservas();
         List<Reserva> findByIdInquilino(Long idInquilino);
-        List<Reserva> findByEstado(EstadoReserva estado);
+        List<Reserva> findByEstadoReserva(EstadoReserva estadoReserva);
         List<Reserva> findByEstado(EstadoPropiedad estadoPropiedad);
         List<Reserva> findByEstadoAndFechaLimitePagoBefore(EstadoReserva estado, LocalDateTime fecha);
 

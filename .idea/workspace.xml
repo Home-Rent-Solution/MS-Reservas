@@ -5,17 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a9e9663b-87b1-4a27-a936-faa3e213212a" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/HomeRentSolution/ms_reservas/client/InquilinoClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/HomeRentSolution/ms_reservas/client/InquilinoClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/HomeRentSolution/ms_reservas/client/LimpiezaClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/HomeRentSolution/ms_reservas/client/LimpiezaClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/HomeRentSolution/ms_reservas/client/MensajeriaClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/HomeRentSolution/ms_reservas/client/MensajeriaClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/HomeRentSolution/ms_reservas/client/PagosClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/HomeRentSolution/ms_reservas/client/PagosClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/HomeRentSolution/ms_reservas/config/DataInitializer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/HomeRentSolution/ms_reservas/config/DataInitializer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/HomeRentSolution/ms_reservas/model/EstadoReserva.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/HomeRentSolution/ms_reservas/model/EstadoReserva.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/HomeRentSolution/ms_reservas/controller/ReservaController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/HomeRentSolution/ms_reservas/controller/ReservaController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/HomeRentSolution/ms_reservas/dto/ms/LimpiezaDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/HomeRentSolution/ms_reservas/dto/ms/LimpiezaDTO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/HomeRentSolution/ms_reservas/model/Reserva.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/HomeRentSolution/ms_reservas/model/Reserva.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/HomeRentSolution/ms_reservas/repository/ReservaRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/HomeRentSolution/ms_reservas/repository/ReservaRepository.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/HomeRentSolution/ms_reservas/service/ReservaService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/HomeRentSolution/ms_reservas/service/ReservaService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.properties" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

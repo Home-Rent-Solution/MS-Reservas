@@ -12,5 +12,6 @@ public class LimpiezaDTO {
     private Long idReserva;
     private LocalDateTime fechaProgramada;
     private String estadoLimpieza;
+    private String motivo;
 
 }

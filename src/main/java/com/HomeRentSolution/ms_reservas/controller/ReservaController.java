@@ -8,6 +8,8 @@ import com.HomeRentSolution.ms_reservas.dto.response.ReservaResponse;
 import com.HomeRentSolution.ms_reservas.dto.ms.InquilinoDTO;
 import com.HomeRentSolution.ms_reservas.exception.PropiedadNoDisponibleException;
 import com.HomeRentSolution.ms_reservas.exception.RecursoNoEncontradoException;
+import com.HomeRentSolution.ms_reservas.model.EstadoReserva;
+import com.HomeRentSolution.ms_reservas.model.Reserva;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +18,7 @@ import com.HomeRentSolution.ms_reservas.service.ReservaService;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/reservas")
@@ -23,6 +26,26 @@ import java.time.LocalDate;
 public class ReservaController {
 
     private final ReservaService reservasService;
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Reserva> obtenerPorId(@PathVariable Long id) {
+
+        Reserva reserva = reservasService.buscarPorId(id);
+
+        return ResponseEntity.ok(reserva);
+    }
+
+    @GetMapping
+    public List<Reserva> obtenerTodas() {
+        return reservasService.buscarTodas();
+    }
+
+    @GetMapping("/estado/{estado}")
+    public List<Reserva> buscarPorEstado(@PathVariable String estado){
+
+        return reservasService.buscarPorEstado(EstadoReserva.valueOf(estado));
+
+    }
 
     // ─── GET /{id}/cliente → vista del inquilino (simple) ────────────────────
     @GetMapping("/{id}/cliente")

@@ -39,7 +39,20 @@ public class ReservaService {
     private final PagosClient pagosClient;
     private final MensajeriaClient mensajeriaClient;
     @Autowired
-    private final LimpiezaClient limpiezaClient;  // corregido: mayúscula consistente
+    private final LimpiezaClient limpiezaClient;
+
+    public Reserva buscarPorId(Long id) {
+        return reservaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Reserva no encontrada"));
+    }
+
+
+    public List<Reserva> buscarPorEstado(EstadoReserva estadoReserva) {
+        return reservaRepository.findByEstadoReserva(estadoReserva);
+    }
+
+
+    public List<Reserva> buscarTodas() { return reservaRepository.findAll(); }
 
     // ─── MAPPER PRIVADO (evita duplicación) ───────────────────────────────────
 
@@ -413,4 +426,6 @@ public class ReservaService {
         InquilinoDTO inquilinoFinal = (inquilino != null) ? inquilino : new InquilinoDTO();
         return enriquecerReserva(reserva, inquilinoFinal);
     }
+
+
 }

@@ -5,6 +5,7 @@ import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -25,6 +26,9 @@ public class Reserva {
 
     @Column(name = "id_inquilino", nullable = false)
     private Long idInquilino;
+
+    @Column(name = "id_limpieza", nullable = false)
+    private Long idLimpieza;
 
     @Enumerated(EnumType.STRING)
     private EstadoReserva estadoReserva;
