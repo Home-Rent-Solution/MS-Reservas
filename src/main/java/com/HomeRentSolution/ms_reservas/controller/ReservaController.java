@@ -140,6 +140,7 @@ public class ReservaController {
         }
     }
 
+
     // ─── PUT /{id}/finalizar → finalizar reserva ──────────────────────────────
     @PutMapping("/{id}/finalizar")
     public ResponseEntity<?> finalizarReserva(@PathVariable Long id) {

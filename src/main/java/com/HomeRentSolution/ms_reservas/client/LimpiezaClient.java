@@ -13,6 +13,9 @@ public interface LimpiezaClient {
     @PostMapping("/api/limpieza/agendar")
     LimpiezaDTO agendarLimpieza(@RequestBody LimpiezaDTO dto);
 
-    @PutMapping("/api/limpieza/{id}/cancelar")
-    void cancelarLimpieza(@PathVariable("id") Long idLimpieza);
+    @PutMapping("/limpiezas/{id}/cancelar-por-sistema")
+    LimpiezaResponseDTO cancelarPorSistema(
+            @PathVariable("id") Long idLimpieza,
+            @RequestBody CancelarLimpiezaRequest request);
+    }
 }
