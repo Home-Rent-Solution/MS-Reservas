@@ -1,9 +1,13 @@
 package com.HomeRentSolution.ms_reservas.service;
 
 import com.HomeRentSolution.ms_reservas.client.*;
+import com.HomeRentSolution.ms_reservas.config.Appconfig;
 import com.HomeRentSolution.ms_reservas.dto.ms.PropiedadDTO;
 import com.HomeRentSolution.ms_reservas.dto.ms.PrecioDTO;
+import com.HomeRentSolution.ms_reservas.dto.ms.InquilinoDTO;
 import com.HomeRentSolution.ms_reservas.dto.request.ReservaCrearRequest;
+import com.HomeRentSolution.ms_reservas.dto.request.ReservaFiltroRequest;
+import com.HomeRentSolution.ms_reservas.dto.response.ReservaDetalleResponse;
 import com.HomeRentSolution.ms_reservas.dto.response.ReservaResponse;
 import com.HomeRentSolution.ms_reservas.exception.RecursoNoEncontradoException;
 import com.HomeRentSolution.ms_reservas.model.EstadoPropiedad;
@@ -110,14 +114,16 @@ public class ReservaServiceTest {
         request.setFechaFin(LocalDate.now().plusDays(10));
 
         when(propiedadClient.obtenerPropiedadPorId(10L)).thenReturn(propiedadDTO);
-        when(precioClient.obtenerPrecioPorPropiedad(10L)).thenReturn(precioDTO);
         when(reservaRepository.save(any(Reserva.class))).thenReturn(reserva);
 
         ReservaResponse resultado = reservaService.crearReserva(request);
 
         assertNotNull(resultado);
         verify(reservaRepository, atLeastOnce()).save(any(Reserva.class));
-        verify(pagosClient, times(1)).crearPago(any());
+        verify(rabbitTemplate).convertAndSend(
+                eq(Appconfig.RESERVAS_EXCHANGE),
+                eq(Appconfig.ROUTING_CREADA),
+                any(ReservaResponse.class));
     }
 
     // PRUEBA 5: buscar por estado devuelve lista filtrada
@@ -141,6 +147,173 @@ public class ReservaServiceTest {
         ReservaResponse resultado = reservaService.cancelarReserva(1L, "Motivo de prueba");
 
         verify(reservaRepository, atLeastOnce()).save(any(Reserva.class));
-        verify(pagosClient, times(1)).cancelarPago(anyLong(), anyString(), any(BigDecimal.class));
+        assertEquals(EstadoReserva.CANCELADA, resultado.getEstado());
+        verify(rabbitTemplate).convertAndSend(
+                eq(Appconfig.RESERVAS_EXCHANGE),
+                eq(Appconfig.ROUTING_CANCELADA),
+                any(ReservaResponse.class));
+    }
+
+    @Test
+    void cancelarReserva_rechazaReservaYaCancelada() {
+        reserva.setEstadoReserva(EstadoReserva.CANCELADA);
+        when(reservaRepository.findById(1L)).thenReturn(Optional.of(reserva));
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> reservaService.cancelarReserva(1L, "duplicada"));
+
+        assertTrue(exception.getMessage().contains("CANCELADA"));
+        verify(reservaRepository, never()).save(any());
+    }
+
+    @Test
+    void crearReserva_rechazaPropiedadInexistente() {
+        ReservaCrearRequest request = new ReservaCrearRequest();
+        request.setIdPropiedad(99L);
+        when(propiedadClient.obtenerPropiedadPorId(99L)).thenReturn(null);
+
+        assertThrows(RecursoNoEncontradoException.class, () -> reservaService.crearReserva(request));
+    }
+
+    @Test
+    void crearReserva_rechazaPropiedadNoDisponible() {
+        ReservaCrearRequest request = new ReservaCrearRequest();
+        request.setIdPropiedad(10L);
+        propiedadDTO.setDisponible(false);
+        when(propiedadClient.obtenerPropiedadPorId(10L)).thenReturn(propiedadDTO);
+
+        assertThrows(RuntimeException.class, () -> reservaService.crearReserva(request));
+    }
+
+    @Test
+    void confirmarReserva_debeConfirmarYNotificar() {
+        InquilinoDTO inquilino = new InquilinoDTO();
+        inquilino.setIdInquilino(20L);
+        inquilino.setNombre("Catalina");
+        inquilino.setEmail("catalina@mail.com");
+        when(reservaRepository.findById(1L)).thenReturn(Optional.of(reserva));
+        when(inquilinosClient.obtenerInquilinoPorId(20L)).thenReturn(inquilino);
+
+        ReservaResponse resultado = reservaService.confirmarReserva(1L);
+
+        assertEquals(EstadoReserva.CONFIRMADA, resultado.getEstado());
+        verify(pagosClient).confirmarPago(1L);
+        verify(propiedadClient).cambiarEstado(10L);
+        verify(mensajeriaClient).enviarEmail(any());
+    }
+
+    @Test
+    void confirmarReserva_vencida_debeCancelarla() {
+        reserva.setFechaLimitesPago(LocalDateTime.now().minusMinutes(1));
+        when(reservaRepository.findById(1L)).thenReturn(Optional.of(reserva));
+
+        assertThrows(RuntimeException.class, () -> reservaService.confirmarReserva(1L));
+        assertEquals(EstadoReserva.CANCELADA, reserva.getEstadoReserva());
+    }
+
+    @Test
+    void confirmarReserva_rechazaEstadoInvalido() {
+        reserva.setEstadoReserva(EstadoReserva.FINALIZADA);
+        when(reservaRepository.findById(1L)).thenReturn(Optional.of(reserva));
+
+        assertThrows(RuntimeException.class, () -> reservaService.confirmarReserva(1L));
+    }
+
+    @Test
+    void buscarConFiltro_debeRetornarSoloPropiedadDisponible() {
+        PropiedadDTO ocupada = new PropiedadDTO();
+        ocupada.setIdPropiedad(10L);
+        ocupada.setUbicacion("Santiago");
+        ocupada.setPrecio(new BigDecimal("50000"));
+        PropiedadDTO libre = new PropiedadDTO();
+        libre.setIdPropiedad(11L);
+        libre.setUbicacion("Santiago");
+        libre.setPrecio(new BigDecimal("60000"));
+        PrecioDTO precioLibre = new PrecioDTO();
+        precioLibre.setTemporada("Alta");
+        precioLibre.setMultiplicador(1.5);
+        ReservaFiltroRequest filtro = new ReservaFiltroRequest();
+        filtro.setFechaInicio(LocalDateTime.now().plusDays(6));
+        filtro.setFechaFin(LocalDateTime.now().plusDays(7));
+        filtro.setUbicacion("Santiago");
+        filtro.setPrecioMin(new BigDecimal("40000"));
+        filtro.setPrecioMax(new BigDecimal("70000"));
+        when(propiedadClient.obtenerTodas()).thenReturn(List.of(ocupada, libre));
+        when(reservaRepository.findAll()).thenReturn(List.of(reserva));
+        when(precioClient.obtenerPrecioPorPropiedad(11L)).thenReturn(precioLibre);
+
+        List<ReservaDetalleResponse> resultado = reservaService.buscarConFiltro(filtro);
+
+        assertEquals(1, resultado.size());
+        assertEquals(11L, resultado.get(0).getIdPropiedad());
+    }
+
+    @Test
+    void obtenerReservasCliente_debeFiltrarYEnriquecer() {
+        InquilinoDTO inquilino = new InquilinoDTO();
+        inquilino.setIdInquilino(20L);
+        inquilino.setNombre("Catalina");
+        inquilino.setEmail("catalina@mail.com");
+        propiedadDTO.setUbicacion("Santiago");
+        when(inquilinosClient.obtenerInquilinoPorId(20L)).thenReturn(inquilino);
+        when(reservaRepository.findByIdInquilino(20L)).thenReturn(List.of(reserva));
+        when(propiedadClient.obtenerPropiedadPorId(10L)).thenReturn(propiedadDTO);
+        when(precioClient.obtenerPrecioPorPropiedad(10L)).thenReturn(precioDTO);
+
+        List<ReservaDetalleResponse> resultado = reservaService.obtenerReservasCliente(
+                20L, LocalDate.now().plusDays(4), LocalDate.now().plusDays(11));
+
+        assertEquals(1, resultado.size());
+        assertEquals("Catalina", resultado.get(0).getNombre());
+        assertEquals("NORMAL", resultado.get(0).getTemporada());
+    }
+
+    @Test
+    void obtenerReservasCliente_rechazaInquilinoInexistente() {
+        when(inquilinosClient.obtenerInquilinoPorId(99L)).thenReturn(null);
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> reservaService.obtenerReservasCliente(99L, null, null));
+    }
+
+    @Test
+    void finalizarReserva_debeFinalizarYRetornarDetalle() {
+        reserva.setEstadoReserva(EstadoReserva.CONFIRMADA);
+        InquilinoDTO inquilino = new InquilinoDTO();
+        inquilino.setIdInquilino(20L);
+        inquilino.setNombre("Catalina");
+        when(reservaRepository.findById(1L)).thenReturn(Optional.of(reserva));
+        when(inquilinosClient.obtenerInquilinoPorId(20L)).thenReturn(inquilino);
+        when(propiedadClient.obtenerPropiedadPorId(10L)).thenReturn(propiedadDTO);
+        when(precioClient.obtenerPrecioPorPropiedad(10L)).thenReturn(precioDTO);
+
+        ReservaDetalleResponse resultado = reservaService.finalizarReserva(1L);
+
+        assertEquals(EstadoReserva.FINALIZADA, resultado.getEstadoReserva());
+        verify(rabbitTemplate).convertAndSend(
+                eq(Appconfig.RESERVAS_EXCHANGE), eq(Appconfig.ROUTING_FINALIZADA), any(ReservaResponse.class));
+    }
+
+    @Test
+    void finalizarReserva_rechazaEstadoInvalido() {
+        when(reservaRepository.findById(1L)).thenReturn(Optional.of(reserva));
+        assertThrows(RuntimeException.class, () -> reservaService.finalizarReserva(1L));
+    }
+
+    @Test
+    void obtenerParaCliente_debeMapearReserva() {
+        when(reservaRepository.findById(1L)).thenReturn(Optional.of(reserva));
+        assertEquals(1L, reservaService.obtenerParaCliente(1L).getIdReserva());
+    }
+
+    @Test
+    void obtenerParaAdmin_toleraFallosDeIntegracion() {
+        when(reservaRepository.findById(1L)).thenReturn(Optional.of(reserva));
+        when(inquilinosClient.obtenerInquilinoPorId(20L)).thenThrow(new RuntimeException("caído"));
+        when(propiedadClient.obtenerPropiedadPorId(10L)).thenThrow(new RuntimeException("caído"));
+        when(precioClient.obtenerPrecioPorPropiedad(10L)).thenThrow(new RuntimeException("caído"));
+
+        ReservaDetalleResponse resultado = reservaService.obtenerParaAdmin(1L);
+
+        assertEquals(1L, resultado.getIdReserva());
     }
 }
