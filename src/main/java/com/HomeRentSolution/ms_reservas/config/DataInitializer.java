@@ -61,6 +61,4 @@ public class DataInitializer implements CommandLineRunner {
 
         log.info(">>> 3 reservas cargadas OK.");
     }
-
-
 }

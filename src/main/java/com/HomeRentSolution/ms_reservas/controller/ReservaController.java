@@ -5,7 +5,6 @@ import com.HomeRentSolution.ms_reservas.dto.request.ReservaCrearRequest;
 import com.HomeRentSolution.ms_reservas.dto.request.ReservaFiltroRequest;
 import com.HomeRentSolution.ms_reservas.dto.response.ReservaDetalleResponse;
 import com.HomeRentSolution.ms_reservas.dto.response.ReservaResponse;
-import com.HomeRentSolution.ms_reservas.dto.ms.InquilinoDTO;
 import com.HomeRentSolution.ms_reservas.exception.PropiedadNoDisponibleException;
 import com.HomeRentSolution.ms_reservas.exception.RecursoNoEncontradoException;
 import com.HomeRentSolution.ms_reservas.model.EstadoReserva;

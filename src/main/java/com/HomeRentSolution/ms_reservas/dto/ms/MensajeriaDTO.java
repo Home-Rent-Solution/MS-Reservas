@@ -1,6 +1,5 @@
 package com.HomeRentSolution.ms_reservas.dto.ms;
 
-
 import lombok.Data;
 
 import java.time.LocalDateTime;

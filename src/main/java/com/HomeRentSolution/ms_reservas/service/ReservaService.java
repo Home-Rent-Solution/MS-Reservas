@@ -426,6 +426,4 @@ public class ReservaService {
         InquilinoDTO inquilinoFinal = (inquilino != null) ? inquilino : new InquilinoDTO();
         return enriquecerReserva(reserva, inquilinoFinal);
     }
-
-
 }

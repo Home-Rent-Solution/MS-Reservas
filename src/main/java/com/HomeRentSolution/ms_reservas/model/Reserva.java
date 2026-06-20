@@ -5,7 +5,6 @@ import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -27,7 +26,7 @@ public class Reserva {
     @Column(name = "id_inquilino", nullable = false)
     private Long idInquilino;
 
-    @Column(name = "id_limpieza", nullable = false)
+    @Column(name = "id_limpieza", nullable = true)
     private Long idLimpieza;
 
     @Enumerated(EnumType.STRING)
@@ -48,10 +47,10 @@ public class Reserva {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal montoTotal;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(nullable = true, precision = 10, scale = 2)
     private BigDecimal montoAnticipo;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private Integer numeroCuotas;
 
 }
