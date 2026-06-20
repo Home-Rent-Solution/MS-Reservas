@@ -1,14 +1,13 @@
 package com.HomeRentSolution.ms_reservas.config;
 
 import com.HomeRentSolution.ms_reservas.model.EstadoReserva;
-
 import com.HomeRentSolution.ms_reservas.model.Reserva;
 import com.HomeRentSolution.ms_reservas.repository.ReservaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
-
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Slf4j
@@ -19,46 +18,50 @@ public class DataInitializer implements CommandLineRunner {
     private final ReservaRepository repository;
 
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
         if (repository.count() > 0) {
             log.info(">>> Reservas ya cargadas. Se omite inicialización.");
             return;
         }
-        log.info(">>> Cargando Reservas iniciales...");
+        log.info(">>> Cargando reservas iniciales...");
 
-        // Reserva 1
-        Reserva reserva1 = new Reserva();
-        reserva1.setIdReserva(10256L);
-        reserva1.setIdPropiedad(1222L);
-        reserva1.setEstadoReserva(EstadoReserva.PENDIENTE);
-        reserva1.setFechaReserva(LocalDateTime.of(2026, 12, 20, 7, 0));
-        reserva1.setFechaLimitesPago(LocalDateTime.of(2027, 1, 20, 6, 30));
-        reserva1.setFechaFin(LocalDateTime.of(2027, 1, 30, 23, 0));
-        reserva1.setIdInquilino(102L);
-        repository.save(reserva1);
+        // Reserva 1 — PENDIENTE
+        Reserva r1 = new Reserva();
+        r1.setIdPropiedad(1222L);
+        r1.setIdInquilino(102L);
+        r1.setEstadoReserva(EstadoReserva.PENDIENTE);
+        r1.setFechaReserva(LocalDateTime.now());
+        r1.setFechaInicio(LocalDateTime.of(2026, 12, 20, 14, 0));
+        r1.setFechaFin(LocalDateTime.of(2027,  1, 20, 11, 0));
+        r1.setFechaLimitesPago(LocalDateTime.now().plusDays(3));
+        r1.setMontoTotal(new BigDecimal("500000"));
+        repository.save(r1);
 
-        // Reserva 2
-        Reserva reserva2 = new Reserva();
-        reserva2.setIdReserva(10257L);
-        reserva2.setIdPropiedad(1223L);
-        reserva2.setEstadoReserva(EstadoReserva.CONFIRMADA); // ← CORREGIDO
-        reserva2.setFechaReserva(LocalDateTime.of(2026, 12, 21, 8, 0));
-        reserva2.setFechaLimitesPago(LocalDateTime.of(2027, 1, 21, 7, 30));
-        reserva2.setFechaFin(LocalDateTime.of(2027, 1, 31, 22, 0));
-        reserva2.setIdInquilino(103L);
-        repository.save(reserva2);
+        // Reserva 2 — CONFIRMADA
+        Reserva r2 = new Reserva();
+        r2.setIdPropiedad(1223L);
+        r2.setIdInquilino(103L);
+        r2.setEstadoReserva(EstadoReserva.CONFIRMADA);
+        r2.setFechaReserva(LocalDateTime.now().minusDays(5));
+        r2.setFechaInicio(LocalDateTime.of(2026, 12, 21, 14, 0));
+        r2.setFechaFin(LocalDateTime.of(2027,  1, 31, 11, 0));
+        r2.setFechaLimitesPago(LocalDateTime.now().minusDays(2));
+        r2.setMontoTotal(new BigDecimal("750000"));
+        repository.save(r2);
 
-        // Reserva 3
-        Reserva reserva3 = new Reserva();
-        reserva3.setIdReserva(10258L);
-        reserva3.setIdPropiedad(1224L);
-        reserva3.setEstadoReserva(EstadoReserva.CANCELADA);
-        reserva3.setFechaReserva(LocalDateTime.of(2026, 12, 22, 9, 0));
-        reserva3.setFechaLimitesPago(LocalDateTime.of(2027, 1, 22, 8, 30));
-        reserva3.setFechaFin(LocalDateTime.of(2027, 1, 31, 21, 0));
-        reserva3.setIdInquilino(104L);
-        repository.save(reserva3);
+        // Reserva 3 — CANCELADA
+        Reserva r3 = new Reserva();
+        r3.setIdPropiedad(1224L);
+        r3.setIdInquilino(104L);
+        r3.setEstadoReserva(EstadoReserva.CANCELADA);
+        r3.setFechaReserva(LocalDateTime.now().minusDays(10));
+        r3.setFechaInicio(LocalDateTime.of(2026, 12, 22, 14, 0));
+        r3.setFechaFin(LocalDateTime.of(2027,  1, 31, 11, 0));
+        r3.setFechaLimitesPago(LocalDateTime.now().minusDays(7));
+        r3.setMontoTotal(new BigDecimal("300000"));
+        repository.save(r3);
 
         log.info(">>> 3 reservas cargadas OK.");
     }
+
 }
