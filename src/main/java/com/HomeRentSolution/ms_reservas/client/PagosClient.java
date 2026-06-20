@@ -10,13 +10,18 @@ import java.math.BigDecimal;
 public interface PagosClient {
 
     @GetMapping("/api/pagos/{id}")
-    Boolean getPagoPorId(@PathVariable ("id") Long idPago);
+    Boolean getPagoPorId(@PathVariable("id") Long idPago);
 
-    @PostMapping("/api/pagos/crear")
+    @PostMapping("/api/v1/pagos")
     void crearPago(@RequestBody PagosDTO pagoRequest);
 
-    @PutMapping("/api/pagos/cancelar/{id}")
-    void cancelarPago(@PathVariable ("id")Long idReserva, @RequestParam String motivo, BigDecimal montoReembolso);
+    @PutMapping("/api/v1/pagos/{id}/cancelar")
+    void cancelarPago(
+            @PathVariable("id") Long idReserva,
+            @RequestParam String motivo,
+            @RequestParam BigDecimal montoReembolso);
 
-    void confirmarPago(Long idReserva);
+    @PutMapping("/api/v1/pagos/{id}/confirmar")
+    void confirmarPago(@PathVariable("id") Long idReserva);
+
 }
