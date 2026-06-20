@@ -127,12 +127,13 @@ public class ReservaService {
 
         reservaRepository.save(reserva);
         rabbitTemplate.convertAndSend(
-                AppConfig.RESERVAS_EXCHANGE,
-                AppConfig.ROUTING_CREADA,
+                Appconfig.RESERVAS_EXCHANGE,
+                Appconfig.ROUTING_CREADA,
                 toResponse(reserva));
         log.info("[RabbitMQ] Evento reserva.creada publicado para Reserva ID: {}",
                 reserva.getIdReserva());
 
+        return toResponse(reserva);
     }
 
     // ─── CONFIRMAR RESERVA ─────────────────────────────────────────────────────
@@ -182,12 +183,13 @@ public class ReservaService {
         reserva.setEstadoReserva(EstadoReserva.CANCELADA);
         reservaRepository.save(reserva);
         rabbitTemplate.convertAndSend(
-                AppConfig.RESERVAS_EXCHANGE,
-                AppConfig.ROUTING_CANCELADA,
+                Appconfig.RESERVAS_EXCHANGE,
+                Appconfig.ROUTING_CANCELADA,
                 toResponse(reserva));
         log.info("[RabbitMQ] Evento reserva.cancelada publicado para Reserva ID: {}",
                 reserva.getIdReserva());
 
+        return toResponse(reserva);
     }
 
     private BigDecimal calcularReembolso(Reserva reserva) {
@@ -214,12 +216,13 @@ public class ReservaService {
         reservaRepository.save(reserva);
 
         rabbitTemplate.convertAndSend(
-                AppConfig.RESERVAS_EXCHANGE,
-                AppConfig.ROUTING_FINALIZADA,
+                Appconfig.RESERVAS_EXCHANGE,
+                Appconfig.ROUTING_FINALIZADA,
                 toResponse(reserva));
         log.info("[RabbitMQ] Evento reserva.finalizada publicado para Reserva ID: {}",
                 reserva.getIdReserva());
 
+        return obtenerParaAdmin(idReserva);
     }
 
     // ─── OBTENER RESERVAS DE CLIENTE ──────────────────────────────────────────
