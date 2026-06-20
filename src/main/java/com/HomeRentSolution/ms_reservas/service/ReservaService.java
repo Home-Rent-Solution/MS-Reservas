@@ -11,10 +11,12 @@ import com.HomeRentSolution.ms_reservas.exception.RecursoNoEncontradoException;
 import com.HomeRentSolution.ms_reservas.model.EstadoPropiedad;
 import com.HomeRentSolution.ms_reservas.model.EstadoReserva;
 import com.HomeRentSolution.ms_reservas.model.Reserva;
+import com.HomeRentSolution.ms_reservas.config.Appconfig;
 import com.HomeRentSolution.ms_reservas.repository.ReservaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -38,8 +40,8 @@ public class ReservaService {
     private final InquilinoClient inquilinosClient;
     private final PagosClient pagosClient;
     private final MensajeriaClient mensajeriaClient;
-    @Autowired
     private final LimpiezaClient limpiezaClient;
+    private final RabbitTemplate rabbitTemplate;
 
     public Reserva buscarPorId(Long id) {
         return reservaRepository.findById(id)
@@ -124,9 +126,13 @@ public class ReservaService {
         reserva.setMontoTotal(BigDecimal.ZERO);
 
         reservaRepository.save(reserva);
-        generarPago(reserva);
+        rabbitTemplate.convertAndSend(
+                AppConfig.RESERVAS_EXCHANGE,
+                AppConfig.ROUTING_CREADA,
+                toResponse(reserva));
+        log.info("[RabbitMQ] Evento reserva.creada publicado para Reserva ID: {}",
+                reserva.getIdReserva());
 
-        return toResponse(reserva);
     }
 
     // ─── CONFIRMAR RESERVA ─────────────────────────────────────────────────────
@@ -175,11 +181,13 @@ public class ReservaService {
 
         reserva.setEstadoReserva(EstadoReserva.CANCELADA);
         reservaRepository.save(reserva);
+        rabbitTemplate.convertAndSend(
+                AppConfig.RESERVAS_EXCHANGE,
+                AppConfig.ROUTING_CANCELADA,
+                toResponse(reserva));
+        log.info("[RabbitMQ] Evento reserva.cancelada publicado para Reserva ID: {}",
+                reserva.getIdReserva());
 
-        pagosClient.cancelarPago(idReserva, motivo, montoReembolso);
-        agendarLimpieza(reserva, LocalDateTime.now());
-
-        return toResponse(reserva);
     }
 
     private BigDecimal calcularReembolso(Reserva reserva) {
@@ -205,7 +213,13 @@ public class ReservaService {
         reserva.setEstadoReserva(EstadoReserva.FINALIZADA);
         reservaRepository.save(reserva);
 
-        return agendarLimpieza(reserva, reserva.getFechaFin());
+        rabbitTemplate.convertAndSend(
+                AppConfig.RESERVAS_EXCHANGE,
+                AppConfig.ROUTING_FINALIZADA,
+                toResponse(reserva));
+        log.info("[RabbitMQ] Evento reserva.finalizada publicado para Reserva ID: {}",
+                reserva.getIdReserva());
+
     }
 
     // ─── OBTENER RESERVAS DE CLIENTE ──────────────────────────────────────────

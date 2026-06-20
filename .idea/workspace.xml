@@ -5,9 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a9e9663b-87b1-4a27-a936-faa3e213212a" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/HomeRentSolution/ms_reservas/config/Appconfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/HomeRentSolution/ms_reservas/config/Appconfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/HomeRentSolution/ms_reservas/service/ReservaService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/HomeRentSolution/ms_reservas/service/ReservaService.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
