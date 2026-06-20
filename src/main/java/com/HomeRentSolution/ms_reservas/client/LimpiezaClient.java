@@ -7,15 +7,15 @@ import org.springframework.web.bind.annotation.*;
 @FeignClient(name = "ms-limpieza", url = "${ms.inquilinos.url}")
 public interface LimpiezaClient {
 
-    @GetMapping("/limpieza/{id}")
-    Object getLimpiezaPorId(@PathVariable ("id") Long idLimpieza);
+    @GetMapping("/api/v1/limpiezas/{id}")
+    LimpiezaDTO getLimpiezaPorId(@PathVariable("id") Long idLimpieza);
 
-    @PostMapping("/api/limpieza/agendar")
+    @PostMapping("/api/v1/limpiezas")
     LimpiezaDTO agendarLimpieza(@RequestBody LimpiezaDTO dto);
 
-    @PutMapping("/limpiezas/{id}/cancelar-por-sistema")
-    LimpiezaResponseDTO cancelarPorSistema(
+    @PutMapping("/api/v1/limpiezas/{id}/estado")
+    LimpiezaDTO cancelarPorSistema(
             @PathVariable("id") Long idLimpieza,
-            @RequestBody CancelarLimpiezaRequest request);
-    }
+            @RequestParam String nuevoEstado);
+
 }
