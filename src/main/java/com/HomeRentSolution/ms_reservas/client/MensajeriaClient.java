@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 @FeignClient(name = "ms-mensajeria", url = "${ms.mensajeria.url}")
 public interface MensajeriaClient {
 
-    @GetMapping("/mensajeria/{id}")
+    @GetMapping("/api/v1/mensajes/{id}")
     Object getMensajeriaPorId(@PathVariable("id") Long idMensaje);
 
-    @PostMapping("/api/mensajeria/email")
+    @PostMapping("/api/v1/mensajes")
     MensajeriaDTO enviarEmail(@RequestBody MensajeriaDTO dto);
 }

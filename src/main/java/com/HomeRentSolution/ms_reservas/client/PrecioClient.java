@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 @FeignClient(name = "ms-precios", url = "${ms.precios.url}")
 public interface PrecioClient {
 
-    @GetMapping("/api/precio/{id}")
+    @GetMapping("/api/v1/precios/{id}")
     Boolean getPrecioPorId(@PathVariable ("id")Long idPrecios);
 
-    @GetMapping("/api/precio/propiedad/{idPropiedad}")
+    @GetMapping("/api/v1/precios/propiedad/{idPropiedad}")
     PrecioDTO obtenerPrecioPorPropiedad(@PathVariable Long idPropiedad);
 }
