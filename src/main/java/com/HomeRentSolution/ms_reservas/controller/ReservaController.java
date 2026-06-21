@@ -25,7 +25,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/reservas")
+@RequestMapping("/api/v1/reservas")
 @RequiredArgsConstructor
 @Tag(name = "Reservas", description = "API de gestión de reservas de propiedades")
 public class ReservaController {
