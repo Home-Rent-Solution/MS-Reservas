@@ -14,21 +14,24 @@ public class Appconfig {
         return new Request.Options(5000, 10000);
     }
 
-    // Exchange principal de reservas
-    public static final String RESERVAS_EXCHANGE    = "reservas.exchange";
+    public static final String RESERVAS_EXCHANGE = "reservas.exchange";
+    public static final String PAGOS_EXCHANGE = "pagos.exchange"; // NUEVO: exchange del publicador
 
-    // Routing keys que MS-Reserva publica
-    public static final String ROUTING_CREADA       = "reserva.creada";
-    public static final String ROUTING_CANCELADA    = "reserva.cancelada";
-    public static final String ROUTING_FINALIZADA   = "reserva.finalizada";
+    public static final String ROUTING_CREADA = "reserva.creada";
+    public static final String ROUTING_CANCELADA = "reserva.cancelada";
+    public static final String ROUTING_FINALIZADA = "reserva.finalizada";
 
-    // Queues que MS-Reserva consume (respuestas de otros MS)
-    public static final String QUEUE_PAGO_CREADO    = "reservas.pago-creado.queue";
+    public static final String QUEUE_PAGO_CREADO = "reservas.pago-creado.queue";
     public static final String QUEUE_PAGO_ELIMINADO = "reservas.pago-eliminado.queue";
 
     @Bean
     public TopicExchange reservasExchange() {
         return new TopicExchange(RESERVAS_EXCHANGE);
+    }
+
+    @Bean
+    public TopicExchange pagosExchange() {
+        return new TopicExchange(PAGOS_EXCHANGE);
     }
 
     @Bean
@@ -42,13 +45,13 @@ public class Appconfig {
     }
 
     @Bean
-    public Binding bindingPagoCreado(Queue pagoCreadoQueue, TopicExchange reservasExchange) {
-        return BindingBuilder.bind(pagoCreadoQueue).to(reservasExchange).with("pago.creado");
+    public Binding bindingPagoCreado(Queue pagoCreadoQueue, TopicExchange pagosExchange) {
+        return BindingBuilder.bind(pagoCreadoQueue).to(pagosExchange).with("pago.creado");
     }
 
     @Bean
-    public Binding bindingPagoEliminado(Queue pagoEliminadoQueue, TopicExchange reservasExchange) {
-        return BindingBuilder.bind(pagoEliminadoQueue).to(reservasExchange).with("pago.eliminado");
+    public Binding bindingPagoEliminado(Queue pagoEliminadoQueue, TopicExchange pagosExchange) {
+        return BindingBuilder.bind(pagoEliminadoQueue).to(pagosExchange).with("pago.eliminado");
     }
 
     @Bean
