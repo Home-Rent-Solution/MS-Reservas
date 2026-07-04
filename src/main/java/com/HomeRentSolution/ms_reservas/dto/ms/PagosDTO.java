@@ -1,13 +1,12 @@
 package com.HomeRentSolution.ms_reservas.dto.ms;
 
 import lombok.Data;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
-public class PagosDTO {
 
+public class PagosDTO {
     private Long idPago;
     private Long idReserva;
     private Long idInquilino;
@@ -19,4 +18,5 @@ public class PagosDTO {
     private LocalDateTime fechaPago;
     private LocalDateTime fechaVencimiento;
     private String estaPago;
+
 }

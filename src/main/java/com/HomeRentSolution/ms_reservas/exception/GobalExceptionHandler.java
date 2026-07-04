@@ -15,15 +15,19 @@ import java.util.stream.Collectors;
 public class GobalExceptionHandler {
 
     @ExceptionHandler(RecursoNoEncontradoException.class)
-    public ResponseEntity<ErrorResponse> handleNoEncontrado(RecursoNoEncontradoException ex) {
+    public ResponseEntity<ErrorResponse> handleRecursoNoEncontrado(RecursoNoEncontradoException ex) {
         log.warn("[EXCEPTION] RecursoNoEncontradoException: {}", ex.getMessage());
-        return build(HttpStatus.NOT_FOUND, "Recurso no encontrado", ex.getMessage());
+        ErrorResponse error = new ErrorResponse(HttpStatus.NOT_FOUND.value(),
+                "Recurso no encontrado", ex.getMessage(), LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
     @ExceptionHandler(PropiedadNoDisponibleException.class)
-    public ResponseEntity<ErrorResponse> handleNoDisponible(PropiedadNoDisponibleException ex) {
+    public ResponseEntity<ErrorResponse> handlePropiedadNoDisponible(PropiedadNoDisponibleException ex) {
         log.warn("[EXCEPTION] PropiedadNoDisponibleException: {}", ex.getMessage());
-        return build(HttpStatus.CONFLICT, "Conflicto de estado", ex.getMessage());
+        ErrorResponse error = new ErrorResponse(HttpStatus.CONFLICT.value(),
+                "Propiedad no disponible", ex.getMessage(), LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -31,24 +35,26 @@ public class GobalExceptionHandler {
         String mensajes = ex.getBindingResult().getFieldErrors().stream()
                 .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
                 .collect(Collectors.joining(", "));
-        return build(HttpStatus.BAD_REQUEST, "Error de validación", mensajes);
+        log.warn("[EXCEPTION] Validación fallida: {}", mensajes);
+        ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST.value(),
+                "Error de validación", mensajes, LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ErrorResponse> handleEstadoInvalido(IllegalStateException ex) {
-        log.warn("[EXCEPTION] Estado incompatible: {}", ex.getMessage());
-        return build(HttpStatus.CONFLICT, "Estado incompatible", ex.getMessage());
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ErrorResponse> handleRuntime(RuntimeException ex) {
+        log.warn("[EXCEPTION] RuntimeException: {}", ex.getMessage());
+        ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST.value(),
+                "Solicitud inválida", ex.getMessage(), LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneral(Exception ex) {
         log.error("[EXCEPTION] Error inesperado: {}", ex.getMessage(), ex);
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno del servidor",
-                "Ocurrió un error inesperado. Intente más tarde.");
-    }
-
-    private ResponseEntity<ErrorResponse> build(HttpStatus status, String error, String mensaje) {
-        return ResponseEntity.status(status).body(
-                new ErrorResponse(status.value(), error, mensaje, LocalDateTime.now()));
+        ErrorResponse error = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "Error interno del servidor",
+                "Ocurrió un error inesperado. Intente más tarde.", LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 }

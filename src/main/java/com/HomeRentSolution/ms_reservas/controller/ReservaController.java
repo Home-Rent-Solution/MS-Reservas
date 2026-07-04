@@ -28,6 +28,7 @@ import java.util.List;
 @RequestMapping("/api/v1/reservas")
 @RequiredArgsConstructor
 @Tag(name = "Reservas", description = "API de gestión de reservas de propiedades")
+
 public class ReservaController {
 
     private final ReservaService reservasService;
@@ -129,3 +130,5 @@ public class ReservaController {
     }
 
 }
+
+

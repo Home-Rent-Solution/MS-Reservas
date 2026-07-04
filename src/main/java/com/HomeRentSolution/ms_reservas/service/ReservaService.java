@@ -2,24 +2,23 @@ package com.HomeRentSolution.ms_reservas.service;
 
 import com.HomeRentSolution.ms_reservas.client.*;
 import com.HomeRentSolution.ms_reservas.dto.ms.*;
+import com.HomeRentSolution.ms_reservas.config.AppConfig;
 import com.HomeRentSolution.ms_reservas.dto.request.ReservaCrearRequest;
 import com.HomeRentSolution.ms_reservas.dto.request.ReservaFiltroRequest;
 import com.HomeRentSolution.ms_reservas.dto.response.ReservaResponse;
 import com.HomeRentSolution.ms_reservas.dto.response.ReservaDetalleResponse;
+import com.HomeRentSolution.ms_reservas.exception.EstadoReservaInvalidoException;
 import com.HomeRentSolution.ms_reservas.exception.PropiedadNoDisponibleException;
 import com.HomeRentSolution.ms_reservas.exception.RecursoNoEncontradoException;
 import com.HomeRentSolution.ms_reservas.model.EstadoPropiedad;
 import com.HomeRentSolution.ms_reservas.model.EstadoReserva;
 import com.HomeRentSolution.ms_reservas.model.Reserva;
-import com.HomeRentSolution.ms_reservas.config.Appconfig;
 import com.HomeRentSolution.ms_reservas.repository.ReservaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -48,11 +47,9 @@ public class ReservaService {
                 .orElseThrow(() -> new RuntimeException("Reserva no encontrada"));
     }
 
-
     public List<Reserva> buscarPorEstado(EstadoReserva estadoReserva) {
         return reservaRepository.findByEstadoReserva(estadoReserva);
     }
-
 
     public List<Reserva> buscarTodas() { return reservaRepository.findAll(); }
 
@@ -110,7 +107,6 @@ public class ReservaService {
     }
 
     // ─── CREAR RESERVA ─────────────────────────────────────────────────────────
-
     public ReservaResponse crearReserva(ReservaCrearRequest request) {
 
         validarDisponibilidad(request.getIdPropiedad());
@@ -124,14 +120,25 @@ public class ReservaService {
         reserva.setFechaReserva(LocalDateTime.now());
         reserva.setFechaLimitesPago(LocalDateTime.now().plusDays(3));
         reserva.setMontoTotal(BigDecimal.ZERO);
-
         reservaRepository.save(reserva);
-        rabbitTemplate.convertAndSend(
-                Appconfig.RESERVAS_EXCHANGE,
-                Appconfig.ROUTING_CREADA,
-                toResponse(reserva));
-        log.info("[RabbitMQ] Evento reserva.creada publicado para Reserva ID: {}",
-                reserva.getIdReserva());
+
+        try {
+            rabbitTemplate.convertAndSend(AppConfig.PAGOS_EXCHANGE, AppConfig.ROUTING_RESERVA_CREADA_PAGOS,
+                    toReservaEventoDTO(reserva));
+            log.info("[RabbitMQ] Evento reserva.creada publicado a pagos.exchange para Reserva ID: {}", reserva.getIdReserva());
+        } catch (Exception ex) {
+            log.warn("[RabbitMQ] Falló la publicación a pagos.exchange, usando Feign como respaldo. Motivo: {}", ex.getMessage());
+            generarPago(reserva);
+        }
+
+        try {
+            rabbitTemplate.convertAndSend(AppConfig.LIMPIEZAS_EXCHANGE, AppConfig.ROUTING_RESERVA_CREADA_LIMPIEZA,
+                    toReservaEventoDTO(reserva));
+            log.info("[RabbitMQ] Evento reserva.creada publicado a limpiezas.exchange para Reserva ID: {}", reserva.getIdReserva());
+        } catch (Exception ex) {
+            log.warn("[RabbitMQ] No se pudo notificar a MS-Limpieza de la nueva reserva ID: {}. Motivo: {}",
+                    reserva.getIdReserva(), ex.getMessage());
+        }
 
         return toResponse(reserva);
     }
@@ -143,7 +150,7 @@ public class ReservaService {
         Reserva reserva = buscarReservaOException(idReserva);
 
         if (reserva.getEstadoReserva() != EstadoReserva.PENDIENTE) {
-            throw new RuntimeException(
+            throw new EstadoReservaInvalidoException(
                     "La reserva no puede confirmarse porque está en estado: " + reserva.getEstadoReserva()
             );
         }
@@ -151,43 +158,42 @@ public class ReservaService {
         if (LocalDateTime.now().isAfter(reserva.getFechaLimitesPago())) {
             reserva.setEstadoReserva(EstadoReserva.CANCELADA);
             reservaRepository.save(reserva);
-            throw new RuntimeException("La reserva venció su fecha límite de pago y fue cancelada automáticamente.");
+            throw new EstadoReservaInvalidoException("La reserva venció su fecha límite de pago y fue cancelada automáticamente.");
         }
 
         pagosClient.confirmarPago(idReserva);
 
-        reserva.setEstadoReserva(EstadoReserva.CONFIRMADA); // corregido: era COMPLETADA
+        reserva.setEstadoReserva(EstadoReserva.CONFIRMADA);
         reservaRepository.save(reserva);
 
         propiedadClient.cambiarEstado(reserva.getIdPropiedad());
-        enviarConfirmacion(reserva); // ahora sí se llama
+        enviarConfirmacion(reserva);
 
         return toResponse(reserva);
     }
 
     // ─── CANCELAR RESERVA ─────────────────────────────────────────────────────
-
     public ReservaResponse cancelarReserva(Long idReserva, String motivo) {
 
         Reserva reserva = buscarReservaOException(idReserva);
 
         if (reserva.getEstadoReserva() == EstadoReserva.CANCELADA ||
                 reserva.getEstadoReserva() == EstadoReserva.FINALIZADA) {
-            throw new RuntimeException(
-                    "La reserva no puede cancelarse porque está en estado: " + reserva.getEstadoReserva()
-            );
+            throw new EstadoReservaInvalidoException(
+                    "La reserva no puede cancelarse porque está en estado: " + reserva.getEstadoReserva());
         }
 
-        BigDecimal montoReembolso = calcularReembolso(reserva);
+        calcularReembolso(reserva);
 
         reserva.setEstadoReserva(EstadoReserva.CANCELADA);
         reservaRepository.save(reserva);
-        rabbitTemplate.convertAndSend(
-                Appconfig.RESERVAS_EXCHANGE,
-                Appconfig.ROUTING_CANCELADA,
-                toResponse(reserva));
-        log.info("[RabbitMQ] Evento reserva.cancelada publicado para Reserva ID: {}",
-                reserva.getIdReserva());
+
+        rabbitTemplate.convertAndSend(AppConfig.PAGOS_EXCHANGE, AppConfig.ROUTING_RESERVA_CANCELADA_PAGOS,
+                toReservaEventoDTO(reserva));
+        rabbitTemplate.convertAndSend(AppConfig.LIMPIEZAS_EXCHANGE, AppConfig.ROUTING_RESERVA_CANCELADA_LIMPIEZA,
+                toReservaEventoDTO(reserva));
+
+        log.info("[RabbitMQ] Eventos reserva.cancelada publicados para Reserva ID: {}", reserva.getIdReserva());
 
         return toResponse(reserva);
     }
@@ -207,7 +213,7 @@ public class ReservaService {
         Reserva reserva = buscarReservaOException(idReserva);
 
         if (reserva.getEstadoReserva() != EstadoReserva.CONFIRMADA) {
-            throw new RuntimeException(
+            throw new EstadoReservaInvalidoException(
                     "La reserva no puede finalizarse porque está en estado: " + reserva.getEstadoReserva()
             );
         }
@@ -216,8 +222,8 @@ public class ReservaService {
         reservaRepository.save(reserva);
 
         rabbitTemplate.convertAndSend(
-                Appconfig.RESERVAS_EXCHANGE,
-                Appconfig.ROUTING_FINALIZADA,
+                AppConfig.RESERVAS_EXCHANGE,
+                AppConfig.ROUTING_FINALIZADA,
                 toResponse(reserva));
         log.info("[RabbitMQ] Evento reserva.finalizada publicado para Reserva ID: {}",
                 reserva.getIdReserva());
@@ -276,21 +282,11 @@ public class ReservaService {
         BigDecimal montoTotal = propiedad.getPrecio()
                 .multiply(BigDecimal.valueOf(precio.getMultiplicador()))
                 .multiply(BigDecimal.valueOf(numeroDias));
-        BigDecimal montoAnticipo = montoTotal.multiply(new BigDecimal("0.5"));
 
         reserva.setMontoTotal(montoTotal);
         reservaRepository.save(reserva);
 
-        PagosDTO pagoDTO = new PagosDTO();
-        pagoDTO.setIdReserva(reserva.getIdReserva());
-        pagoDTO.setIdInquilino(reserva.getIdInquilino());
-        pagoDTO.setIdPropiedad(reserva.getIdPropiedad());
-        pagoDTO.setMontoTotal(montoTotal);
-        pagoDTO.setMontoAnticipo(montoAnticipo);
-        pagoDTO.setFechaVencimiento(reserva.getFechaLimitesPago());
-        pagoDTO.setNumeroCuotas(1);
-
-        pagosClient.crearPago(pagoDTO);
+        pagosClient.crearPago(toReservaEventoDTO(reserva));
     }
 
     private void enviarConfirmacion(Reserva reserva) {
@@ -322,30 +318,6 @@ public class ReservaService {
             log.error("[MS-Reservas] Error al enviar confirmación al inquilino ID: {}. Error: {}",
                     reserva.getIdInquilino(), e.getMessage());
         }
-    }
-
-    private ReservaDetalleResponse agendarLimpieza(Reserva reserva, LocalDateTime fechaProgramada) {
-        LimpiezaDTO request = new LimpiezaDTO();
-        request.setIdPropiedad(reserva.getIdPropiedad());
-        request.setIdReserva(reserva.getIdReserva());
-        request.setFechaProgramada(fechaProgramada);
-
-        LimpiezaDTO response = limpiezaClient.agendarLimpieza(request);
-
-        ReservaDetalleResponse dto = new ReservaDetalleResponse();
-        dto.setIdReserva(reserva.getIdReserva());
-        dto.setEstadoReserva(reserva.getEstadoReserva());
-        dto.setMontoTotal(reserva.getMontoTotal());
-        dto.setFechaInicio(reserva.getFechaInicio());
-        dto.setFechaFin(reserva.getFechaFin());
-        dto.setIdPropiedad(reserva.getIdPropiedad());
-        dto.setIdLimpieza(response.getIdLimpieza());
-        dto.setFechaProgramada(response.getFechaProgramada());
-        if (response.getEstadoLimpieza() != null) {
-            dto.setEstadoLimpieza(String.valueOf(response.getEstadoLimpieza()));
-        }
-
-        return dto;
     }
 
     private ReservaDetalleResponse enriquecerReserva(Reserva reserva, InquilinoDTO inquilino) {
@@ -420,18 +392,15 @@ public class ReservaService {
     }
 
     // ─── VISTA CLIENTE (inquilino) ────────────────────────────────────────────
-// Muestra solo los datos relevantes para el inquilino: su reserva, fechas, monto, estado
     public ReservaResponse obtenerParaCliente(Long idReserva) {
         Reserva reserva = buscarReservaOException(idReserva);
         return toResponse(reserva);
     }
 
     // ─── VISTA ADMIN ──────────────────────────────────────────────────────────
-// Muestra todo: datos de propiedad, precio, temporada, inquilino, limpieza
     public ReservaDetalleResponse obtenerParaAdmin(Long idReserva) {
         Reserva reserva = buscarReservaOException(idReserva);
 
-        // Reutilizamos obtenerInquilino para enriquecer
         InquilinoDTO inquilino = null;
         try {
             inquilino = inquilinosClient.obtenerInquilinoPorId(reserva.getIdInquilino());
@@ -439,8 +408,20 @@ public class ReservaService {
             log.warn("[MS-Reservas] No se pudo obtener inquilino {} para admin", reserva.getIdInquilino());
         }
 
-        // Si no hay inquilino, igual mostramos la reserva con los datos que haya
         InquilinoDTO inquilinoFinal = (inquilino != null) ? inquilino : new InquilinoDTO();
         return enriquecerReserva(reserva, inquilinoFinal);
     }
+
+    private ReservaEventoDTO toReservaEventoDTO(Reserva reserva) {
+        ReservaEventoDTO dto = new ReservaEventoDTO();
+        dto.setIdReserva(reserva.getIdReserva());
+        dto.setIdPropiedad(reserva.getIdPropiedad());
+        dto.setIdInquilino(reserva.getIdInquilino());
+        dto.setMontoTotal(reserva.getMontoTotal());
+        dto.setFechaVencimiento(reserva.getFechaLimitesPago());
+        dto.setFechaFin(reserva.getFechaFin());
+        dto.setEstadoReserva(reserva.getEstadoReserva().name());
+        return dto;
+    }
 }
+

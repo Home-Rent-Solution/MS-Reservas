@@ -1,7 +1,7 @@
 package com.HomeRentSolution.ms_reservas.service;
 
 import com.HomeRentSolution.ms_reservas.client.*;
-import com.HomeRentSolution.ms_reservas.config.Appconfig;
+import com.HomeRentSolution.ms_reservas.config.AppConfig;
 import com.HomeRentSolution.ms_reservas.dto.ms.PropiedadDTO;
 import com.HomeRentSolution.ms_reservas.dto.ms.PrecioDTO;
 import com.HomeRentSolution.ms_reservas.dto.ms.InquilinoDTO;
@@ -121,8 +121,8 @@ public class ReservaServiceTest {
         assertNotNull(resultado);
         verify(reservaRepository, atLeastOnce()).save(any(Reserva.class));
         verify(rabbitTemplate).convertAndSend(
-                eq(Appconfig.RESERVAS_EXCHANGE),
-                eq(Appconfig.ROUTING_CREADA),
+                eq(AppConfig.RESERVAS_EXCHANGE),
+                eq(AppConfig.ROUTING_CREADA),
                 any(ReservaResponse.class));
     }
 
@@ -149,8 +149,8 @@ public class ReservaServiceTest {
         verify(reservaRepository, atLeastOnce()).save(any(Reserva.class));
         assertEquals(EstadoReserva.CANCELADA, resultado.getEstado());
         verify(rabbitTemplate).convertAndSend(
-                eq(Appconfig.RESERVAS_EXCHANGE),
-                eq(Appconfig.ROUTING_CANCELADA),
+                eq(AppConfig.RESERVAS_EXCHANGE),
+                eq(AppConfig.ROUTING_CANCELADA),
                 any(ReservaResponse.class));
     }
 
@@ -290,7 +290,7 @@ public class ReservaServiceTest {
 
         assertEquals(EstadoReserva.FINALIZADA, resultado.getEstadoReserva());
         verify(rabbitTemplate).convertAndSend(
-                eq(Appconfig.RESERVAS_EXCHANGE), eq(Appconfig.ROUTING_FINALIZADA), any(ReservaResponse.class));
+                eq(AppConfig.RESERVAS_EXCHANGE), eq(AppConfig.ROUTING_FINALIZADA), any(ReservaResponse.class));
     }
 
     @Test

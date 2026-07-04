@@ -7,22 +7,31 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class Appconfig {
+public class AppConfig {
 
     @Bean
     public Request.Options feignOptions() {
         return new Request.Options(5000, 10000);
     }
 
+    // --- Exchange propio de Reserva (queda para eventos que no son pagos/limpieza,
+    //     p.ej. reserva.finalizada, útil para mensajería/comentarios a futuro) ---
     public static final String RESERVAS_EXCHANGE = "reservas.exchange";
-    public static final String PAGOS_EXCHANGE = "pagos.exchange"; // NUEVO: exchange del publicador
-
-    public static final String ROUTING_CREADA = "reserva.creada";
-    public static final String ROUTING_CANCELADA = "reserva.cancelada";
     public static final String ROUTING_FINALIZADA = "reserva.finalizada";
 
+    // --- Exchange de PAGOS (no es propiedad de Reserva, solo lo referenciamos) ---
+    public static final String PAGOS_EXCHANGE = "pagos.exchange";
+    public static final String ROUTING_RESERVA_CREADA_PAGOS = "reserva.creada";
+    public static final String ROUTING_RESERVA_CANCELADA_PAGOS = "reserva.cancelada";
     public static final String QUEUE_PAGO_CREADO = "reservas.pago-creado.queue";
     public static final String QUEUE_PAGO_ELIMINADO = "reservas.pago-eliminado.queue";
+    public static final String ROUTING_PAGO_CREADO = "pago.creado";
+    public static final String ROUTING_PAGO_ELIMINADO = "pago.eliminado";
+
+    // --- Exchange de LIMPIEZA (no es propiedad de Reserva, solo lo referenciamos) ---
+    public static final String LIMPIEZAS_EXCHANGE = "limpiezas.exchange";
+    public static final String ROUTING_RESERVA_CREADA_LIMPIEZA = "reserva.creada";
+    public static final String ROUTING_RESERVA_CANCELADA_LIMPIEZA = "reserva.cancelada";
 
     @Bean
     public TopicExchange reservasExchange() {
@@ -32,6 +41,11 @@ public class Appconfig {
     @Bean
     public TopicExchange pagosExchange() {
         return new TopicExchange(PAGOS_EXCHANGE);
+    }
+
+    @Bean
+    public TopicExchange limpiezasExchange() {
+        return new TopicExchange(LIMPIEZAS_EXCHANGE);
     }
 
     @Bean
@@ -46,12 +60,12 @@ public class Appconfig {
 
     @Bean
     public Binding bindingPagoCreado(Queue pagoCreadoQueue, TopicExchange pagosExchange) {
-        return BindingBuilder.bind(pagoCreadoQueue).to(pagosExchange).with("pago.creado");
+        return BindingBuilder.bind(pagoCreadoQueue).to(pagosExchange).with(ROUTING_PAGO_CREADO);
     }
 
     @Bean
     public Binding bindingPagoEliminado(Queue pagoEliminadoQueue, TopicExchange pagosExchange) {
-        return BindingBuilder.bind(pagoEliminadoQueue).to(pagosExchange).with("pago.eliminado");
+        return BindingBuilder.bind(pagoEliminadoQueue).to(pagosExchange).with(ROUTING_PAGO_ELIMINADO);
     }
 
     @Bean
