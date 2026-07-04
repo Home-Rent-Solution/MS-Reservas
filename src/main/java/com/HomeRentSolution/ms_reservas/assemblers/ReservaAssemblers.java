@@ -1,57 +1,43 @@
 package com.HomeRentSolution.ms_reservas.assemblers;
 
 import com.HomeRentSolution.ms_reservas.controller.ReservaV2Controller;
-import com.HomeRentSolution.ms_reservas.dto.ms.LimpiezaDTO;
-import com.HomeRentSolution.ms_reservas.dto.ms.PagosDTO;
 import com.HomeRentSolution.ms_reservas.dto.response.ReservaResponse;
+import com.HomeRentSolution.ms_reservas.model.EstadoReserva;
 import com.HomeRentSolution.ms_reservas.model.Reserva;
+import org.springframework.hateoas.server.mvc.RepresentationModelAssemblerSupport;
 import org.springframework.stereotype.Component;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
-import com.HomeRentSolution.ms_reservas.client.LimpiezaClient;
 
 @Component
-public class ReservaAssemblers {
+public class ReservaAssemblers extends RepresentationModelAssemblerSupport<Reserva, ReservaResponse> {
 
-    LimpiezaClient limpiezaClient;
-
-    public ReservaAssemblers (){
+    public ReservaAssemblers() {
         super(ReservaV2Controller.class, ReservaResponse.class);
-
     }
 
+    @Override
+    public ReservaResponse toModel(Reserva entidad) {
+        ReservaResponse dto = new ReservaResponse();
+        dto.setIdReserva(entidad.getIdReserva());
+        dto.setIdPropiedad(entidad.getIdPropiedad());
+        dto.setIdInquilino(entidad.getIdInquilino());
+        dto.setEstado(entidad.getEstadoReserva());
+        dto.setFechaReserva(entidad.getFechaReserva());
+        dto.setFechaInicio(entidad.getFechaInicio());
+        dto.setFechaFin(entidad.getFechaFin());
+        dto.setFechaLimitesPago(entidad.getFechaLimitesPago());
+        dto.setMontoTotal(entidad.getMontoTotal());
 
-    private ReservaResponse toResponse(Reserva reserva) {
-        ReservaResponse r = new ReservaResponse();
-        r.setIdReserva(reserva.getIdReserva());
-        r.setIdPropiedad(reserva.getIdPropiedad());
-        r.setIdInquilino(reserva.getIdInquilino());
-        r.setEstado(reserva.getEstadoReserva());
-        r.setFechaReserva(reserva.getFechaReserva());
-        r.setFechaInicio(reserva.getFechaInicio());
-        r.setFechaFin(reserva.getFechaFin());
-        r.setFechaLimitesPago(reserva.getFechaLimitesPago());
-        r.setMontoTotal(reserva.getMontoTotal());
+        dto.add(linkTo(methodOn(ReservaV2Controller.class).obtenerPorId(entidad.getIdReserva())).withSelfRel());
 
-        // Enriquecer con datos de MS-Limpieza
-        try {
-
-            LimpiezaDTO limpieza = limpiezaClient.getLimpiezaPorId(reserva.getIdReserva());
-            if (limpieza != null) r.setIdLimpieza(limpieza.getIdLimpieza());
-        } catch (Exception e) {
-            log.warn("[MS-Reservas] No se pudo obtener limpieza para reserva {}", reserva.getIdReserva());
+        if (entidad.getEstadoReserva() == EstadoReserva.PENDIENTE) {
+            dto.add(linkTo(methodOn(ReservaV2Controller.class).confirmar(entidad.getIdReserva())).withRel("confirmar"));
+            dto.add(linkTo(methodOn(ReservaV2Controller.class).cancelar(entidad.getIdReserva(), null)).withRel("cancelar"));
+        } else if (entidad.getEstadoReserva() == EstadoReserva.CONFIRMADA) {
+            dto.add(linkTo(methodOn(ReservaV2Controller.class).finalizar(entidad.getIdReserva())).withRel("finalizar"));
+            dto.add(linkTo(methodOn(ReservaV2Controller.class).cancelar(entidad.getIdReserva(), null)).withRel("cancelar"));
         }
 
-        // Enriquecer con datos de MS-Pagos
-        try {
-            PagosDTO pago = pagosClient.obtenerPagoPorReserva(reserva.getIdReserva());
-            if (pago != null) {
-                r.setMontoAnticipo(pago.getMontoAnticipo());
-                r.setNumeroCuotas(pago.getNumeroCuotas());
-            }
-        } catch (Exception e) {
-            log.warn("[MS-Reservas] No se pudo obtener pago para reserva {}", reserva.getIdReserva());
-        }
-
-        return r;
+        return dto;
     }
 }
