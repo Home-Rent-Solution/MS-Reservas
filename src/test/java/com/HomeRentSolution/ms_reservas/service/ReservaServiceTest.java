@@ -5,6 +5,7 @@ import com.HomeRentSolution.ms_reservas.config.AppConfig;
 import com.HomeRentSolution.ms_reservas.dto.ms.PropiedadDTO;
 import com.HomeRentSolution.ms_reservas.dto.ms.PrecioDTO;
 import com.HomeRentSolution.ms_reservas.dto.ms.InquilinoDTO;
+import com.HomeRentSolution.ms_reservas.dto.ms.ReservaEventoDTO;
 import com.HomeRentSolution.ms_reservas.dto.request.ReservaCrearRequest;
 import com.HomeRentSolution.ms_reservas.dto.request.ReservaFiltroRequest;
 import com.HomeRentSolution.ms_reservas.dto.response.ReservaDetalleResponse;
@@ -121,9 +122,13 @@ public class ReservaServiceTest {
         assertNotNull(resultado);
         verify(reservaRepository, atLeastOnce()).save(any(Reserva.class));
         verify(rabbitTemplate).convertAndSend(
-                eq(AppConfig.RESERVAS_EXCHANGE),
-                eq(AppConfig.ROUTING_CREADA),
-                any(ReservaResponse.class));
+                eq(AppConfig.PAGOS_EXCHANGE),
+                eq(AppConfig.ROUTING_RESERVA_CREADA_PAGOS),
+                any(ReservaEventoDTO.class));
+        verify(rabbitTemplate).convertAndSend(
+                eq(AppConfig.LIMPIEZAS_EXCHANGE),
+                eq(AppConfig.ROUTING_RESERVA_CREADA_LIMPIEZA),
+                any(ReservaEventoDTO.class));
     }
 
     // PRUEBA 5: buscar por estado devuelve lista filtrada
@@ -149,9 +154,13 @@ public class ReservaServiceTest {
         verify(reservaRepository, atLeastOnce()).save(any(Reserva.class));
         assertEquals(EstadoReserva.CANCELADA, resultado.getEstado());
         verify(rabbitTemplate).convertAndSend(
-                eq(AppConfig.RESERVAS_EXCHANGE),
-                eq(AppConfig.ROUTING_CANCELADA),
-                any(ReservaResponse.class));
+                eq(AppConfig.PAGOS_EXCHANGE),
+                eq(AppConfig.ROUTING_RESERVA_CANCELADA_PAGOS),
+                any(ReservaEventoDTO.class));
+        verify(rabbitTemplate).convertAndSend(
+                eq(AppConfig.LIMPIEZAS_EXCHANGE),
+                eq(AppConfig.ROUTING_RESERVA_CANCELADA_LIMPIEZA),
+                any(ReservaEventoDTO.class));
     }
 
     @Test
