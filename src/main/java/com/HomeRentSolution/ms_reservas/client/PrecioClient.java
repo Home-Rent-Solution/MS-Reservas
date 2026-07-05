@@ -5,12 +5,22 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import java.util.List;
+
 @FeignClient(name = "ms-precios", url = "${ms.precios.url}")
 public interface PrecioClient {
 
     @GetMapping("/api/v1/precios/{id}")
-    Boolean getPrecioPorId(@PathVariable ("id")Long idPrecios);
+    PrecioDTO getPrecioPorId(@PathVariable("id") Long idPrecios);
 
-    @GetMapping("/api/v1/precios/propiedad/{idPropiedad}")
-    PrecioDTO obtenerPrecioPorPropiedad(@PathVariable Long idPropiedad);
+    @GetMapping("/api/v1/precios/propiedad/{id}")
+    List<PrecioDTO> obtenerPreciosPorPropiedad(@PathVariable("id") Long idPropiedad);
+
+    default PrecioDTO obtenerPrecioPorPropiedad(Long idPropiedad) {
+        List<PrecioDTO> precios = obtenerPreciosPorPropiedad(idPropiedad);
+        if (precios == null || precios.isEmpty()) {
+            return null;
+        }
+        return precios.get(0);
+    }
 }
