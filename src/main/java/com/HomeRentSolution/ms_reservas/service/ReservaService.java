@@ -82,11 +82,11 @@ public class ReservaService {
                 .filter(p -> Boolean.TRUE.equals(p.isDisponible()))
                 .filter(p -> cumpleUbicacion(p, filtro.getUbicacion()))
                 .filter(p -> cumpleRangoPrecio(p, filtro.getPrecioMin(), filtro.getPrecioMax()))
-                .map(this::mapPropiedadADetalle)
+                .map(p -> mapPropiedadADetalle(p, filtro.getFechaInicio()))
                 .collect(Collectors.toList());
     }
 
-    private ReservaDetalleResponse mapPropiedadADetalle(PropiedadDTO propiedad) {
+    private ReservaDetalleResponse mapPropiedadADetalle(PropiedadDTO propiedad, LocalDateTime fechaInicio) {
         ReservaDetalleResponse dto = new ReservaDetalleResponse();
         dto.setIdPropiedad(propiedad.getIdPropiedad().longValue());
         dto.setUbicacion(propiedad.getUbicacion());
@@ -94,7 +94,7 @@ public class ReservaService {
         dto.setPrecioBase(propiedad.getPrecio());
 
         try {
-            PrecioDTO precio = precioClient.obtenerPrecioPorPropiedad(propiedad.getIdPropiedad().longValue());
+            PrecioDTO precio = obtenerPrecioAplicable(propiedad.getIdPropiedad().longValue(), fechaInicio);
             if (precio != null) {
                 dto.setTemporada(precio.getTemporada());
                 dto.setMultiplicador(precio.getMultiplicador());
@@ -276,7 +276,7 @@ public class ReservaService {
 
     private void generarPago(Reserva reserva) {
         PropiedadDTO propiedad = propiedadClient.obtenerPropiedadPorId(reserva.getIdPropiedad());
-        PrecioDTO precio = precioClient.obtenerPrecioPorPropiedad(reserva.getIdPropiedad());
+        PrecioDTO precio = obtenerPrecioAplicable(reserva.getIdPropiedad(), reserva.getFechaInicio());
 
         long numeroDias = ChronoUnit.DAYS.between(reserva.getFechaInicio(), reserva.getFechaFin());
         BigDecimal montoTotal = propiedad.getPrecio()
@@ -347,7 +347,7 @@ public class ReservaService {
         }
 
         try {
-            PrecioDTO precio = precioClient.obtenerPrecioPorPropiedad(reserva.getIdPropiedad());
+            PrecioDTO precio = obtenerPrecioAplicable(reserva.getIdPropiedad(), reserva.getFechaInicio());
             if (precio != null) {
                 dto.setTemporada(precio.getTemporada());
                 dto.setMultiplicador(precio.getMultiplicador());
@@ -390,8 +390,36 @@ public class ReservaService {
         boolean cumpleMax = (max == null) || (p.getPrecio().compareTo(max) <= 0);
         return cumpleMin && cumpleMax;
     }
+    private PrecioDTO obtenerPrecioAplicable(Long idPropiedad, LocalDateTime fechaInicio) {
+        List<PrecioDTO> precios = precioClient.obtenerPreciosPorPropiedad(idPropiedad);
+        return seleccionarPrecioPorTemporada(precios, fechaInicio);
+    }
 
-    // ─── VISTA CLIENTE (inquilino) ────────────────────────────────────────────
+    private PrecioDTO seleccionarPrecioPorTemporada(List<PrecioDTO> precios, LocalDateTime fechaInicio) {
+        if (precios == null || precios.isEmpty()) {
+            return null;
+        }
+
+        String temporadaReserva = calcularTemporada(fechaInicio);
+        return precios.stream()
+                .filter(precio -> precio.getTemporada() != null)
+                .filter(precio -> precio.getTemporada().equalsIgnoreCase(temporadaReserva))
+                .findFirst()
+                .orElse(precios.get(0));
+    }
+
+    private String calcularTemporada(LocalDateTime fechaInicio) {
+        int mes = fechaInicio != null ? fechaInicio.getMonthValue() : LocalDate.now().getMonthValue();
+
+        if (mes == 12 || mes == 1 || mes == 2) {
+            return "Alta";
+        }
+        if (mes >= 6 && mes <= 8) {
+            return "Baja";
+        }
+        return "Media";
+    }
+    // VISTA CLIENTE (inquilino)
     public ReservaResponse obtenerParaCliente(Long idReserva) {
         Reserva reserva = buscarReservaOException(idReserva);
         return toResponse(reserva);

@@ -249,7 +249,7 @@ public class ReservaServiceTest {
         filtro.setPrecioMax(new BigDecimal("70000"));
         when(propiedadClient.obtenerTodas()).thenReturn(List.of(ocupada, libre));
         when(reservaRepository.findAll()).thenReturn(List.of(reserva));
-        when(precioClient.obtenerPrecioPorPropiedad(11L)).thenReturn(precioLibre);
+        when(precioClient.obtenerPreciosPorPropiedad(11L)).thenReturn(List.of(precioLibre));
 
         List<ReservaDetalleResponse> resultado = reservaService.buscarConFiltro(filtro);
 
@@ -267,7 +267,7 @@ public class ReservaServiceTest {
         when(inquilinosClient.obtenerInquilinoPorId(20L)).thenReturn(inquilino);
         when(reservaRepository.findByIdInquilino(20L)).thenReturn(List.of(reserva));
         when(propiedadClient.obtenerPropiedadPorId(10L)).thenReturn(propiedadDTO);
-        when(precioClient.obtenerPrecioPorPropiedad(10L)).thenReturn(precioDTO);
+        when(precioClient.obtenerPreciosPorPropiedad(10L)).thenReturn(List.of(precioDTO));
 
         List<ReservaDetalleResponse> resultado = reservaService.obtenerReservasCliente(
                 20L, LocalDate.now().plusDays(4), LocalDate.now().plusDays(11));
@@ -293,7 +293,7 @@ public class ReservaServiceTest {
         when(reservaRepository.findById(1L)).thenReturn(Optional.of(reserva));
         when(inquilinosClient.obtenerInquilinoPorId(20L)).thenReturn(inquilino);
         when(propiedadClient.obtenerPropiedadPorId(10L)).thenReturn(propiedadDTO);
-        when(precioClient.obtenerPrecioPorPropiedad(10L)).thenReturn(precioDTO);
+        when(precioClient.obtenerPreciosPorPropiedad(10L)).thenReturn(List.of(precioDTO));
 
         ReservaDetalleResponse resultado = reservaService.finalizarReserva(1L);
 
@@ -319,7 +319,7 @@ public class ReservaServiceTest {
         when(reservaRepository.findById(1L)).thenReturn(Optional.of(reserva));
         when(inquilinosClient.obtenerInquilinoPorId(20L)).thenThrow(new RuntimeException("caído"));
         when(propiedadClient.obtenerPropiedadPorId(10L)).thenThrow(new RuntimeException("caído"));
-        when(precioClient.obtenerPrecioPorPropiedad(10L)).thenThrow(new RuntimeException("caído"));
+        when(precioClient.obtenerPreciosPorPropiedad(10L)).thenThrow(new RuntimeException("caído"));
 
         ReservaDetalleResponse resultado = reservaService.obtenerParaAdmin(1L);
 

@@ -15,12 +15,4 @@ public interface PrecioClient {
 
     @GetMapping("/api/v1/precios/propiedad/{id}")
     List<PrecioDTO> obtenerPreciosPorPropiedad(@PathVariable("id") Long idPropiedad);
-
-    default PrecioDTO obtenerPrecioPorPropiedad(Long idPropiedad) {
-        List<PrecioDTO> precios = obtenerPreciosPorPropiedad(idPropiedad);
-        if (precios == null || precios.isEmpty()) {
-            return null;
-        }
-        return precios.get(0);
-    }
 }
