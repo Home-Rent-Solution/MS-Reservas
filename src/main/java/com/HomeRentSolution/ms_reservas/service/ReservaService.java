@@ -14,7 +14,6 @@ import com.HomeRentSolution.ms_reservas.model.EstadoPropiedad;
 import com.HomeRentSolution.ms_reservas.model.EstadoReserva;
 import com.HomeRentSolution.ms_reservas.model.Reserva;
 import com.HomeRentSolution.ms_reservas.repository.ReservaRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -27,10 +26,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class ReservaService {
 
     private final PropiedadesClient propiedadClient;
@@ -41,6 +40,19 @@ public class ReservaService {
     private final MensajeriaClient mensajeriaClient;
     private final LimpiezaClient limpiezaClient;
     private final RabbitTemplate rabbitTemplate;
+
+
+    @Autowired
+    public ReservaService(PropiedadesClient propiedadClient, ReservaRepository reservaRepository, PrecioClient precioClient, InquilinoClient inquilinosClient, PagosClient pagosClient, MensajeriaClient mensajeriaClient, LimpiezaClient limpiezaClient, RabbitTemplate rabbitTemplate) {
+        this.propiedadClient = propiedadClient;
+        this.reservaRepository = reservaRepository;
+        this.precioClient = precioClient;
+        this.inquilinosClient = inquilinosClient;
+        this.pagosClient = pagosClient;
+        this.mensajeriaClient = mensajeriaClient;
+        this.limpiezaClient = limpiezaClient;
+        this.rabbitTemplate = rabbitTemplate;
+    }
 
     public Reserva buscarPorId(Long id) {
         return reservaRepository.findById(id)

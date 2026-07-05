@@ -8,23 +8,29 @@ import com.HomeRentSolution.ms_reservas.service.ReservaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @RestController
 @RequestMapping("/api/v2/reservas")
-@RequiredArgsConstructor
 @Tag(name = "Reservas V2",
         description = "Endpoints de reservas con enlaces de navegación según el estado actual")
 public class ReservaV2Controller {
 
     private final ReservaService reservasService;
     private final ReservaAssemblers assembler;
+
+
+    @Autowired
+    public ReservaV2Controller(ReservaService reservasService, ReservaAssemblers assembler) {
+        this.reservasService = reservasService;
+        this.assembler = assembler;
+    }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener reserva HATEOAS",

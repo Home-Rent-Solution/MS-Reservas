@@ -3,19 +3,24 @@ package com.HomeRentSolution.ms_reservas.config;
 import com.HomeRentSolution.ms_reservas.model.EstadoReserva;
 import com.HomeRentSolution.ms_reservas.model.Reserva;
 import com.HomeRentSolution.ms_reservas.repository.ReservaRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
 
     private final ReservaRepository repository;
+
+
+    @Autowired
+    public DataInitializer(ReservaRepository repository) {
+        this.repository = repository;
+    }
 
     @Override
     public void run(String... args) {

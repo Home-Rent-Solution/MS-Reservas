@@ -16,22 +16,27 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @RestController
 @RequestMapping("/api/v1/reservas")
-@RequiredArgsConstructor
 @Tag(name = "Reservas", description = "API de gestión de reservas de propiedades")
 
 public class ReservaController {
 
     private final ReservaService reservasService;
+
+
+    @Autowired
+    public ReservaController(ReservaService reservasService) {
+        this.reservasService = reservasService;
+    }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener reserva por ID")
