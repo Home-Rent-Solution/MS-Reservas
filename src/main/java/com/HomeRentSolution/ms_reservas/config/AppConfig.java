@@ -6,12 +6,18 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.time.Duration;
+
 @Configuration
 public class AppConfig {
 
     @Bean
     public Request.Options feignOptions() {
-        return new Request.Options(5000, 10000);
+        return new Request.Options(
+                Duration.ofMillis(5000),
+                Duration.ofMillis(10000),
+                true
+        );
     }
 
     // --- Exchange propio de Reserva (queda para eventos que no son pagos/limpieza,
