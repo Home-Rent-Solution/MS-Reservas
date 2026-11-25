@@ -1,5 +1,6 @@
 package com.HomeRentSolution.ms_reservas.controller;
 
+import org.springframework.mock.web.MockHttpServletRequest;
 import com.HomeRentSolution.ms_reservas.dto.request.ReservaFiltroRequest;
 import com.HomeRentSolution.ms_reservas.dto.response.ReservaDetalleResponse;
 import com.HomeRentSolution.ms_reservas.dto.response.ReservaResponse;
@@ -34,7 +35,7 @@ class ReservaControllerAdditionalTest {
         ReservaResponse dto = new ReservaResponse();
         when(reservaService.obtenerParaCliente(1L)).thenReturn(dto);
 
-        ResponseEntity<ReservaResponse> response = controller.getParaCliente(1L);
+        ResponseEntity<ReservaResponse> response = controller.getParaCliente(1L, new MockHttpServletRequest());
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertSame(dto, response.getBody());
@@ -45,7 +46,7 @@ class ReservaControllerAdditionalTest {
         ReservaDetalleResponse dto = new ReservaDetalleResponse();
         when(reservaService.obtenerParaAdmin(1L)).thenReturn(dto);
 
-        ResponseEntity<ReservaDetalleResponse> response = controller.getParaAdmin(1L);
+        ResponseEntity<ReservaDetalleResponse> response = controller.getParaAdmin(1L, new MockHttpServletRequest());
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertSame(dto, response.getBody());

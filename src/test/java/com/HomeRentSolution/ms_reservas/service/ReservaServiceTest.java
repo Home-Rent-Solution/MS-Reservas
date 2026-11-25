@@ -10,6 +10,7 @@ import com.HomeRentSolution.ms_reservas.dto.request.ReservaCrearRequest;
 import com.HomeRentSolution.ms_reservas.dto.request.ReservaFiltroRequest;
 import com.HomeRentSolution.ms_reservas.dto.response.ReservaDetalleResponse;
 import com.HomeRentSolution.ms_reservas.dto.response.ReservaResponse;
+import com.HomeRentSolution.ms_reservas.exception.AccesoDenegadoException;
 import com.HomeRentSolution.ms_reservas.exception.RecursoNoEncontradoException;
 import com.HomeRentSolution.ms_reservas.model.EstadoPropiedad;
 import com.HomeRentSolution.ms_reservas.model.EstadoReserva;
@@ -324,5 +325,31 @@ public class ReservaServiceTest {
         ReservaDetalleResponse resultado = reservaService.obtenerParaAdmin(1L);
 
         assertEquals(1L, resultado.getIdReserva());
+    }
+
+    // ─── INQUILINO DE LA SESIÓN (B-11) ─────────────────────────────────────────
+
+    @Test
+    void idInquilinoPorCorreo_loBuscaEnMsInquilinos() {
+        InquilinoDTO perfil = new InquilinoDTO();
+        perfil.setIdInquilino(20L);
+        when(inquilinosClient.obtenerInquilinoPorEmail("inquilino@duoc.cl")).thenReturn(perfil);
+
+        assertEquals(20L, reservaService.idInquilinoPorCorreo("inquilino@duoc.cl"));
+    }
+
+    @Test
+    void validarDuenioDeReserva_conReservaDeOtroInquilino_lanzaAccesoDenegado() {
+        when(reservaRepository.findById(1L)).thenReturn(Optional.of(reserva)); // es del inquilino 20
+
+        assertThrows(AccesoDenegadoException.class,
+                () -> reservaService.validarDuenioDeReserva(1L, 99L));
+    }
+
+    @Test
+    void validarDuenioDeReserva_conSuPropiaReserva_noLanzaError() {
+        when(reservaRepository.findById(1L)).thenReturn(Optional.of(reserva));
+
+        assertDoesNotThrow(() -> reservaService.validarDuenioDeReserva(1L, 20L));
     }
 }

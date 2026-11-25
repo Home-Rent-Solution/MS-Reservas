@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,20 +39,36 @@ public class ReservaController {
         this.reservasService = reservasService;
     }
 
+    // idInquilino de quien hace la petición, según las cabeceras que agrega el API Gateway con
+    // los datos del token. Solo se restringe a los inquilinos: si es admin, anfitrión o una
+    // llamada interna entre servicios (sin cabeceras), devuelve null y puede ver todo.
+    private Long idInquilinoSesion(HttpServletRequest request) {
+        if (!"INQUILINO".equals(request.getHeader("X-Usuario-Rol"))) {
+            return null;
+        }
+        return reservasService.idInquilinoPorCorreo(request.getHeader("X-Usuario-Correo"));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Obtener reserva por ID")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Reserva encontrada", content = @Content(schema = @Schema(implementation = Reserva.class))),
             @ApiResponse(responseCode = "404", description = "Reserva no encontrada")
     })
-    public ResponseEntity<Reserva> obtenerPorId(@Parameter(description = "ID de la reserva", example = "1", required = true) @PathVariable Long id) {
+    public ResponseEntity<Reserva> obtenerPorId(@Parameter(description = "ID de la reserva", example = "1", required = true) @PathVariable Long id,
+                                                HttpServletRequest request) {
+        reservasService.validarDuenioDeReserva(id, idInquilinoSesion(request));
         return ResponseEntity.ok(reservasService.buscarPorId(id));
     }
 
     @GetMapping
-    @Operation(summary = "Listar todas las reservas")
-    @ApiResponse(responseCode = "200", description = "Listado completo de reservas")
-    public ResponseEntity<List<Reserva>> obtenerTodas() {
+    @Operation(summary = "Listar reservas", description = "Un inquilino recibe solo sus reservas; el anfitrión y el administrador, todas.")
+    @ApiResponse(responseCode = "200", description = "Listado de reservas")
+    public ResponseEntity<List<Reserva>> obtenerTodas(HttpServletRequest request) {
+        Long idInquilino = idInquilinoSesion(request);
+        if (idInquilino != null) {
+            return ResponseEntity.ok(reservasService.buscarPorInquilino(idInquilino));
+        }
         return ResponseEntity.ok(reservasService.buscarTodas());
     }
 
@@ -59,21 +76,32 @@ public class ReservaController {
     @Operation(summary = "Listar reservas por estado")
     @ApiResponses({@ApiResponse(responseCode = "200", description = "Reservas filtradas"), @ApiResponse(responseCode = "400", description = "Estado inválido")})
     public ResponseEntity<List<Reserva>> buscarPorEstado(
-            @Parameter(description = "Estado de reserva", example = "PENDIENTE", required = true) @PathVariable String estado) {
-        return ResponseEntity.ok(reservasService.buscarPorEstado(EstadoReserva.valueOf(estado)));
+            @Parameter(description = "Estado de reserva", example = "PENDIENTE", required = true) @PathVariable String estado,
+            HttpServletRequest request) {
+        List<Reserva> reservas = reservasService.buscarPorEstado(EstadoReserva.valueOf(estado));
+        Long idInquilino = idInquilinoSesion(request);
+        if (idInquilino != null) {
+            // un inquilino solo ve las suyas
+            reservas = reservas.stream().filter(r -> idInquilino.equals(r.getIdInquilino())).toList();
+        }
+        return ResponseEntity.ok(reservas);
     }
 
     @GetMapping("/{id}/cliente")
     @Operation(summary = "Obtener vista de cliente", description = "Retorna los datos esenciales de la reserva para el inquilino.")
     @ApiResponses({@ApiResponse(responseCode = "200", description = "Vista de cliente", content = @Content(schema = @Schema(implementation = ReservaResponse.class))), @ApiResponse(responseCode = "404", description = "Reserva no encontrada")})
-    public ResponseEntity<ReservaResponse> getParaCliente(@Parameter(description = "ID de la reserva", example = "1") @PathVariable Long id) {
+    public ResponseEntity<ReservaResponse> getParaCliente(@Parameter(description = "ID de la reserva", example = "1") @PathVariable Long id,
+                                                          HttpServletRequest request) {
+        reservasService.validarDuenioDeReserva(id, idInquilinoSesion(request));
         return ResponseEntity.ok(reservasService.obtenerParaCliente(id));
     }
 
     @GetMapping("/{id}/admin")
     @Operation(summary = "Obtener vista administrativa", description = "Enriquece la reserva con información remota de propiedad, precio e inquilino.")
     @ApiResponses({@ApiResponse(responseCode = "200", description = "Detalle administrativo", content = @Content(schema = @Schema(implementation = ReservaDetalleResponse.class))), @ApiResponse(responseCode = "404", description = "Reserva no encontrada")})
-    public ResponseEntity<ReservaDetalleResponse> getParaAdmin(@Parameter(description = "ID de la reserva", example = "1") @PathVariable Long id) {
+    public ResponseEntity<ReservaDetalleResponse> getParaAdmin(@Parameter(description = "ID de la reserva", example = "1") @PathVariable Long id,
+                                                               HttpServletRequest request) {
+        reservasService.validarDuenioDeReserva(id, idInquilinoSesion(request));
         return ResponseEntity.ok(reservasService.obtenerParaAdmin(id));
     }
 
@@ -87,7 +115,13 @@ public class ReservaController {
     public ResponseEntity<ReservaResponse> crearReserva(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, description = "Datos de la nueva reserva",
                     content = @Content(schema = @Schema(implementation = ReservaCrearRequest.class), examples = @ExampleObject(value = "{\"idPropiedad\":10,\"idInquilino\":7,\"fechaInicio\":\"2026-07-01\",\"fechaFin\":\"2026-07-05\"}")))
-            @RequestBody ReservaCrearRequest request) {
+            @RequestBody ReservaCrearRequest request,
+            HttpServletRequest peticion) {
+        // si reserva un inquilino, la reserva queda a su nombre aunque envíe otro idInquilino
+        Long idInquilino = idInquilinoSesion(peticion);
+        if (idInquilino != null) {
+            request.setIdInquilino(idInquilino);
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(reservasService.crearReserva(request));
     }
 

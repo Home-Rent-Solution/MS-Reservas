@@ -1,5 +1,6 @@
 package com.HomeRentSolution.ms_reservas.controller;
 
+import org.springframework.mock.web.MockHttpServletRequest;
 import com.HomeRentSolution.ms_reservas.dto.request.ReservaCancelarRequest;
 import com.HomeRentSolution.ms_reservas.dto.request.ReservaCrearRequest;
 import com.HomeRentSolution.ms_reservas.dto.response.ReservaResponse;
@@ -59,7 +60,7 @@ public class ReservaControllerTest {
     void obtenerPorId_debeRetornar200() {
         when(reservasService.buscarPorId(1L)).thenReturn(reserva);
 
-        ResponseEntity<Reserva> respuesta = reservaController.obtenerPorId(1L);
+        ResponseEntity<Reserva> respuesta = reservaController.obtenerPorId(1L, new MockHttpServletRequest());
 
         assertEquals(HttpStatus.OK, respuesta.getStatusCode());
         assertNotNull(respuesta.getBody());
@@ -71,7 +72,7 @@ public class ReservaControllerTest {
     void obtenerTodas_debeRetornarLista() {
         when(reservasService.buscarTodas()).thenReturn(List.of(reserva));
 
-        ResponseEntity<List<Reserva>> respuesta = reservaController.obtenerTodas();
+        ResponseEntity<List<Reserva>> respuesta = reservaController.obtenerTodas(new MockHttpServletRequest());
 
         assertEquals(HttpStatus.OK, respuesta.getStatusCode());
         assertFalse(respuesta.getBody().isEmpty());
@@ -84,7 +85,7 @@ public class ReservaControllerTest {
                 .thenReturn(reservaResponse);
 
         ReservaCrearRequest request = new ReservaCrearRequest();
-        ResponseEntity<ReservaResponse> respuesta = reservaController.crearReserva(request);
+        ResponseEntity<ReservaResponse> respuesta = reservaController.crearReserva(request, new MockHttpServletRequest());
 
         assertEquals(HttpStatus.CREATED, respuesta.getStatusCode());
         assertNotNull(respuesta.getBody());
@@ -122,9 +123,40 @@ public class ReservaControllerTest {
                 .thenReturn(List.of(reserva));
 
         ResponseEntity<List<Reserva>> respuesta =
-                reservaController.buscarPorEstado("PENDIENTE");
+                reservaController.buscarPorEstado("PENDIENTE", new MockHttpServletRequest());
 
         assertEquals(HttpStatus.OK, respuesta.getStatusCode());
         assertFalse(respuesta.getBody().isEmpty());
+    }
+
+    // PRUEBA B-11: un inquilino solo recibe sus reservas
+    @Test
+    void obtenerTodas_comoInquilino_devuelveSoloLasSuyas() {
+        MockHttpServletRequest peticion = new MockHttpServletRequest();
+        peticion.addHeader("X-Usuario-Correo", "inquilino@duoc.cl");
+        peticion.addHeader("X-Usuario-Rol", "INQUILINO");
+        when(reservasService.idInquilinoPorCorreo("inquilino@duoc.cl")).thenReturn(20L);
+        when(reservasService.buscarPorInquilino(20L)).thenReturn(List.of(reserva));
+
+        ResponseEntity<List<Reserva>> respuesta = reservaController.obtenerTodas(peticion);
+
+        assertEquals(1, respuesta.getBody().size());
+        verify(reservasService, never()).buscarTodas();
+    }
+
+    // PRUEBA B-11: la reserva queda a nombre del inquilino de la sesión aunque envíe otro id
+    @Test
+    void crearReserva_comoInquilino_usaSuPropioId() {
+        MockHttpServletRequest peticion = new MockHttpServletRequest();
+        peticion.addHeader("X-Usuario-Correo", "inquilino@duoc.cl");
+        peticion.addHeader("X-Usuario-Rol", "INQUILINO");
+        when(reservasService.idInquilinoPorCorreo("inquilino@duoc.cl")).thenReturn(20L);
+        when(reservasService.crearReserva(any(ReservaCrearRequest.class))).thenReturn(reservaResponse);
+
+        ReservaCrearRequest request = new ReservaCrearRequest();
+        request.setIdInquilino(99L); // intenta reservar a nombre de otro
+        reservaController.crearReserva(request, peticion);
+
+        assertEquals(20L, request.getIdInquilino());
     }
 }

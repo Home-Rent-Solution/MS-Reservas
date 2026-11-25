@@ -1,5 +1,7 @@
 package com.HomeRentSolution.ms_reservas.service;
 
+import com.HomeRentSolution.ms_reservas.exception.AccesoDenegadoException;
+import feign.FeignException;
 import com.HomeRentSolution.ms_reservas.client.*;
 import com.HomeRentSolution.ms_reservas.dto.ms.*;
 import com.HomeRentSolution.ms_reservas.config.AppConfig;
@@ -64,6 +66,31 @@ public class ReservaService {
     }
 
     public List<Reserva> buscarTodas() { return reservaRepository.findAll(); }
+
+    // ─── INQUILINO DE LA SESIÓN (B-11) ─────────────────────────────────────────
+    // idInquilino de una cuenta, buscado en MS-Inquilinos por el correo (el vínculo del punto B-12)
+    public Long idInquilinoPorCorreo(String correo) {
+        try {
+            return inquilinosClient.obtenerInquilinoPorEmail(correo).getIdInquilino();
+        } catch (FeignException.BadRequest e) {
+            throw new RecursoNoEncontradoException("Tu cuenta no tiene un perfil de inquilino");
+        }
+    }
+
+    // Un inquilino solo puede ver sus propias reservas
+    public void validarDuenioDeReserva(Long idReserva, Long idInquilinoSesion) {
+        if (idInquilinoSesion == null) {
+            return;
+        }
+        Reserva reserva = buscarReservaOException(idReserva);
+        if (!idInquilinoSesion.equals(reserva.getIdInquilino())) {
+            throw new AccesoDenegadoException("Solo puedes ver tus propias reservas");
+        }
+    }
+
+    public List<Reserva> buscarPorInquilino(Long idInquilino) {
+        return reservaRepository.findByIdInquilino(idInquilino);
+    }
 
     // ─── MAPPER PRIVADO (evita duplicación) ───────────────────────────────────
 

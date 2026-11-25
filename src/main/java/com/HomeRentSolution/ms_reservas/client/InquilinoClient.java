@@ -11,5 +11,9 @@ public interface InquilinoClient {
     @GetMapping("/api/v1/inquilinos/{id}")
     InquilinoDTO obtenerInquilinoPorId(@PathVariable ("id") Long idInquilino);
 
+    // perfil del inquilino según el correo de su cuenta (punto B-12)
+    @GetMapping("/api/v1/inquilinos/email/{email}")
+    InquilinoDTO obtenerInquilinoPorEmail(@PathVariable("email") String email);
+
 
 }

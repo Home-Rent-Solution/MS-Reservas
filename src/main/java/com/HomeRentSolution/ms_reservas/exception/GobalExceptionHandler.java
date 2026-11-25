@@ -22,6 +22,14 @@ public class GobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
+    @ExceptionHandler(AccesoDenegadoException.class)
+    public ResponseEntity<ErrorResponse> handleAccesoDenegado(AccesoDenegadoException ex) {
+        log.warn("[EXCEPTION] AccesoDenegadoException: {}", ex.getMessage());
+        ErrorResponse error = new ErrorResponse(HttpStatus.FORBIDDEN.value(),
+                "Acceso denegado", ex.getMessage(), LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    }
+
     @ExceptionHandler(PropiedadNoDisponibleException.class)
     public ResponseEntity<ErrorResponse> handlePropiedadNoDisponible(PropiedadNoDisponibleException ex) {
         log.warn("[EXCEPTION] PropiedadNoDisponibleException: {}", ex.getMessage());
