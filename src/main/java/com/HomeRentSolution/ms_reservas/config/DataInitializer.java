@@ -32,8 +32,8 @@ public class DataInitializer implements CommandLineRunner {
 
         // Reserva 1 — PENDIENTE
         Reserva r1 = new Reserva();
-        r1.setIdPropiedad(1222L);
-        r1.setIdInquilino(102L);
+        r1.setIdPropiedad(1L);
+        r1.setIdInquilino(1L);
         r1.setEstadoReserva(EstadoReserva.PENDIENTE);
         r1.setFechaReserva(LocalDateTime.now());
         r1.setFechaInicio(LocalDateTime.of(2026, 12, 20, 14, 0));
@@ -44,8 +44,8 @@ public class DataInitializer implements CommandLineRunner {
 
         // Reserva 2 — CONFIRMADA
         Reserva r2 = new Reserva();
-        r2.setIdPropiedad(1223L);
-        r2.setIdInquilino(103L);
+        r2.setIdPropiedad(2L);
+        r2.setIdInquilino(1L);
         r2.setEstadoReserva(EstadoReserva.CONFIRMADA);
         r2.setFechaReserva(LocalDateTime.now().minusDays(5));
         r2.setFechaInicio(LocalDateTime.of(2026, 12, 21, 14, 0));
@@ -56,8 +56,8 @@ public class DataInitializer implements CommandLineRunner {
 
         // Reserva 3 — CANCELADA
         Reserva r3 = new Reserva();
-        r3.setIdPropiedad(1224L);
-        r3.setIdInquilino(104L);
+        r3.setIdPropiedad(3L);
+        r3.setIdInquilino(2L);
         r3.setEstadoReserva(EstadoReserva.CANCELADA);
         r3.setFechaReserva(LocalDateTime.now().minusDays(10));
         r3.setFechaInicio(LocalDateTime.of(2026, 12, 22, 14, 0));
